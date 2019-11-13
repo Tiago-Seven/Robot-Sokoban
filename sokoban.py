@@ -4,7 +4,7 @@ import sys
 import pygame
 import string
 import queue
-
+from real_time_display import Basic_Map, Real_Time_Display
 
 class game:
 
@@ -21,10 +21,11 @@ class game:
             return False
 
     def __init__(self, filename, level):
+        #if level < 1 or level > 50:
         level = int(level)
         self.queue = queue.LifoQueue()
         self.matrix = []
-#        if level < 1 or level > 50:
+        
         if level < 1:
             print("ERROR: Level "+str(level)+" is out of range")
             sys.exit(1)
@@ -310,24 +311,26 @@ def start_game():
         sys.exit(2)
 
 
-wall = pygame.image.load('images/wall.png')
-floor = pygame.image.load('images/floor.png')
-box = pygame.image.load('images/box.png')
-box_docked = pygame.image.load('images/box_docked.png')
-worker = pygame.image.load('tiny_robot.png')
-worker_docked = pygame.image.load('images/worker_dock.png')
-docker = pygame.image.load('images/dock.png')
-background = 255, 226, 191
-pygame.init()
+# wall = pygame.image.load('images/wall.png')
+# floor = pygame.image.load('images/floor.png')
+# box = pygame.image.load('images/box.png')
+# box_docked = pygame.image.load('images/box_docked.png')
+# worker = pygame.image.load('tiny_robot.png')
+# worker_docked = pygame.image.load('images/worker_dock.png')
+# docker = pygame.image.load('images/dock.png')
 
+pygame.init()
 level = start_game()
 game = game('levels', level)
-size = game.load_size()
-screen = pygame.display.set_mode(size)
+# size = game.load_size()
+# screen = pygame.display.set_mode(size)
+basic_map = Basic_Map(game.get_matrix())
+real_time_display = Real_Time_Display(basic_map)
+
 while 1:
     if game.is_completed():
-        display_end(screen)
-    print_game(game.get_matrix(), screen)
+        break
+    real_time_display.run()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit(0)
