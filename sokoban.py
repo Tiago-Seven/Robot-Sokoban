@@ -97,7 +97,6 @@ class game:
             print("ERROR: Value '"+content+"' to be added is not valid")
 
     def can_move(self, x, y, index):
-        print(self.robots)
         return self.get_content(self.robots[index][0]+x, self.robots[index][1]+y) not in ['#', '*', '$', '@']
 
     def next(self, x, y, index):
@@ -363,6 +362,7 @@ basic_map = Basic_Map(game.get_matrix())
 real_time_display = Real_Time_Display(basic_map)
 moves = []
 index = 0
+real_time_display.run(moves)
 while 1:
     if game.is_completed():
         break
