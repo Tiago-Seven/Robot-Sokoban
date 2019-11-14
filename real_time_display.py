@@ -162,7 +162,29 @@ class Robot:
 
     def update_rotate(self):
         if not self.is_rotated():
-            self.rotation += 10
+            if self.move == (0, 1):
+                if self.rotation < 180:
+                    self.rotation -= 10
+                else:
+                    self.rotation += 10
+            elif self.move == (0,-1):
+                if self.rotation < 180:
+                    self.rotation += 10
+                else:
+                    self.rotation -= 10
+            elif self.move == (1,0):
+                if 90 < self.rotation < 270:
+                    self.rotation -= 10
+                else:
+                    self.rotation += 10
+            elif self.move == (-1,0):
+                if 90 < self.rotation < 270:
+                    self.rotation += 10
+                else:
+                    self.rotation -= 10
+            self.rotation = self.rotation % 360
+            if self.rotation < 0:
+                self.rotation += 360
 
     def display(self,surf):
         # calcaulate the axis aligned bounding box of the rotated image
