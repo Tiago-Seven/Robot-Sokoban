@@ -52,7 +52,7 @@ class game:
                         self.matrix.append(row)
                     else:
                         break
-        robots = self.get_robots()
+        self.robots = self.get_robots()
     
     def get_robots(self):
         x = 0
@@ -61,7 +61,7 @@ class game:
         for row in self.matrix:
             for char in row:
                 if char == '@':  # robot on floor
-                    robots.append((x,y))
+                    robots.append((x, y))
                 elif char == '+':  # robot on goal
                     robots.append((x, y))
                 x = x + 1
@@ -96,26 +96,15 @@ class game:
         else:
             print("ERROR: Value '"+content+"' to be added is not valid")
 
-    def worker(self):
-        x = 0
-        y = 0
-        for row in self.matrix:
-            for pos in row:
-                if pos == '@' or pos == '+':
-                    return (x, y, pos)
-                else:
-                    x = x + 1
-            y = y + 1
-            x = 0
+    def can_move(self, x, y, index):
+        print(self.robots)
+        return self.get_content(self.robots[index][0]+x, self.robots[index][1]+y) not in ['#', '*', '$', '@']
 
-    def can_move(self, x, y):
-        return self.get_content(self.worker()[0]+x, self.worker()[1]+y) not in ['#', '*', '$']
+    def next(self, x, y, index):
+        return self.get_content(self.robots[index][0]+x, self.robots[index][1]+y)
 
-    def next(self, x, y):
-        return self.get_content(self.worker()[0]+x, self.worker()[1]+y)
-
-    def can_push(self, x, y):
-        return (self.next(x, y) in ['*', '$'] and self.next(x+x, y+y) in [' ', '.'])
+    def can_push(self, x, y, index):
+        return (self.next(x, y, index) in ['*', '$'] and self.next(x+x, y+y, index) in [' ', '.'])
 
     def is_completed(self):
         for row in self.matrix:
@@ -142,54 +131,57 @@ class game:
             self.set_content(x+a, y+b, '*')
             self.set_content(x, y, '.')
 
-    def unmove(self):
-        if not self.queue.empty():
-            movement = self.queue.get()
-            if movement[2]:
-                current = self.worker()
-                self.move(movement[0] * -1, movement[1] * -1, False)
-                self.move_box(current[0]+movement[0], current[1] +
-                              movement[1], movement[0] * -1, movement[1] * -1)
-            else:
-                self.move(movement[0] * -1, movement[1] * -1, False)
+    # def unmove(self):
+    #     if not self.queue.empty():
+    #         movement = self.queue.get()
+    #         if movement[2]:
+    #             current = self.worker()
+    #             self.move(movement[0] * -1, movement[1] * -1, False)
+    #             self.move_box(current[0]+movement[0], current[1] +
+    #                           movement[1], movement[0] * -1, movement[1] * -1)
+    #         else:
+    #             self.move(movement[0] * -1, movement[1] * -1, False)
 
-    def move(self, x, y, save):
+    def move(self, x, y, save, index):
         moves = []
-        if self.can_move(x, y):
-            current = self.worker()
-            future = self.next(x, y)
+        if self.can_move(x, y, index):
+            current = self.robots[index]
+            char = self.get_content(current[0], current[1])
+            future = self.next(x, y, index)
             moves.append(Move(
                 (current[0], current[1]),
                 (current[0]+x, current[1]+y)
             ))
-            if current[2] == '@' and future == ' ':
+            if char == '@' and future == ' ':
                 # worker to floor
                 self.set_content(current[0]+x, current[1]+y, '@')
                 self.set_content(current[0], current[1], ' ')
                 if save:
                     self.queue.put((x, y, False))
-            elif current[2] == '@' and future == '.':
+            elif char == '@' and future == '.':
                 # worker to goal
                 self.set_content(current[0]+x, current[1]+y, '+')
                 self.set_content(current[0], current[1], ' ')
                 if save:
                     self.queue.put((x, y, False))
-            elif current[2] == '+' and future == ' ':
+            elif char == '+' and future == ' ':
                 # worker on goal to floor
                 self.set_content(current[0]+x, current[1]+y, '@')
                 self.set_content(current[0], current[1], '.')
                 if save:
                     self.queue.put((x, y, False))
-            elif current[2] == '+' and future == '.':
+            elif char == '+' and future == '.':
                 # worker on goal to goal
                 self.set_content(current[0]+x, current[1]+y, '+')
                 self.set_content(current[0], current[1], '.')
                 if save:
                     self.queue.put((x, y, False))
-        elif self.can_push(x, y):
-            current = self.worker()
-            future = self.next(x, y)
-            future_box = self.next(x+x, y+y)
+            self.robots[index] = (current[0]+x, current[1]+y)
+        elif self.can_push(x, y, index):
+            current = self.robots[index]
+            char = self.get_content(current[0], current[1])
+            future = self.next(x, y, index)
+            future_box = self.next(x+x, y+y, index)
             moves.append(Move(
                 (current[0], current[1]),
                 (current[0]+x, current[1]+y)
@@ -198,63 +190,63 @@ class game:
                 (current[0]+x, current[1]+y),
                 (current[0]+2*x, current[1]+2*y)
             ))
-            if current[2] == '@' and future == '$' and future_box == ' ':
+            if char == '@' and future == '$' and future_box == ' ':
                 # worker push box to floor
                 self.move_box(current[0]+x, current[1]+y, x, y)
                 self.set_content(current[0], current[1], ' ')
                 self.set_content(current[0]+x, current[1]+y, '@')
                 if save:
                     self.queue.put((x, y, True))
-            elif current[2] == '@' and future == '$' and future_box == '.':
+            elif char == '@' and future == '$' and future_box == '.':
                 # worker push box to goal
                 self.move_box(current[0]+x, current[1]+y, x, y)
                 self.set_content(current[0], current[1], ' ')
                 self.set_content(current[0]+x, current[1]+y, '@')
                 if save:
                     self.queue.put((x, y, True))
-            elif current[2] == '@' and future == '*' and future_box == ' ':
+            elif char == '@' and future == '*' and future_box == ' ':
                 # worker push box on goal to floor
                 self.move_box(current[0]+x, current[1]+y, x, y)
                 self.set_content(current[0], current[1], ' ')
                 self.set_content(current[0]+x, current[1]+y, '+')
                 if save:
                     self.queue.put((x, y, True))
-            elif current[2] == '@' and future == '*' and future_box == '.':
+            elif char == '@' and future == '*' and future_box == '.':
                 # worker push box on goal to goal
                 self.move_box(current[0]+x, current[1]+y, x, y)
                 self.set_content(current[0], current[1], ' ')
                 self.set_content(current[0]+x, current[1]+y, '+')
                 if save:
                     self.queue.put((x, y, True))
-            if current[2] == '+' and future == '$' and future_box == ' ':
+            if char == '+' and future == '$' and future_box == ' ':
                 # worker on goal push box to floor
                 self.move_box(current[0]+x, current[1]+y, x, y)
                 self.set_content(current[0], current[1], '.')
                 self.set_content(current[0]+x, current[1]+y, '@')
                 if save:
                     self.queue.put((x, y, True))
-            elif current[2] == '+' and future == '$' and future_box == '.':
+            elif char == '+' and future == '$' and future_box == '.':
                 # worker on goal push box to goal
                 self.move_box(current[0]+x, current[1]+y, x, y)
                 self.set_content(current[0], current[1], '.')
                 self.set_content(current[0]+x, current[1]+y, '+')
                 if save:
                     self.queue.put((x, y, True))
-            elif current[2] == '+' and future == '*' and future_box == ' ':
+            elif char == '+' and future == '*' and future_box == ' ':
                 # worker on goal push box on goal to floor
                 self.move_box(current[0]+x, current[1]+y, x, y)
                 self.set_content(current[0], current[1], '.')
                 self.set_content(current[0]+x, current[1]+y, '+')
                 if save:
                     self.queue.put((x, y, True))
-            elif current[2] == '+' and future == '*' and future_box == '.':
+            elif char == '+' and future == '*' and future_box == '.':
                 # worker on goal push box on goal to goal
                 self.move_box(current[0]+x, current[1]+y, x, y)
                 self.set_content(current[0], current[1], '.')
                 self.set_content(current[0]+x, current[1]+y, '+')
                 if save:
                     self.queue.put((x, y, True))
-
+            self.robots[index] = (current[0]+x, current[1]+y)
         return moves
 
 
@@ -370,6 +362,7 @@ game = game('levels', level)
 basic_map = Basic_Map(game.get_matrix())
 real_time_display = Real_Time_Display(basic_map)
 moves = []
+index = 0
 while 1:
     if game.is_completed():
         break
@@ -378,19 +371,23 @@ while 1:
             sys.exit(0)
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
-                moves = game.move(0, -1, True)
+                moves = game.move(0, -1, True, index)
             elif event.key == pygame.K_DOWN:
-                moves = game.move(0, 1, True)
+                moves = game.move(0, 1, True, index)
             elif event.key == pygame.K_LEFT:
-                moves = game.move(-1, 0, True)
+                moves = game.move(-1, 0, True, index)
             elif event.key == pygame.K_RIGHT:
-                moves = game.move(1, 0, True)
+                moves = game.move(1, 0, True, index)
+            elif event.key == pygame.K_f:
+                moves = [Move((0,0),(0,0))]
             elif event.key == pygame.K_q:
                 sys.exit(0)
-            elif event.key == pygame.K_d:
-                game.unmove()
+            # elif event.key == pygame.K_d:
+            #     game.unmove()
     if len(moves) > 0:
         real_time_display.run(moves)
         moves = []
+        index += 1
+        index = index % len(game.robots)
 
     pygame.display.update()

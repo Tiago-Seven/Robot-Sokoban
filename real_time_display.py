@@ -81,9 +81,6 @@ class Real_Time_Display:
             print("manelobject")
             for move in moves:
                 if object.x == move.start[0] * 32 and object.y == move.start[1] * 32:
-                    print(move)
-                    print(object.x)
-                    print(object.y)
                     object.move = (move.end[0] - move.start[0],
                                    move.end[1] - move.start[1])
                     object.dest = (move.end[0]*32, move.end[1]*32)
