@@ -4,8 +4,10 @@ import sys
 import pygame
 import string
 import queue
+
 from real_time_display import Basic_Map, Real_Time_Display
 from utils import Move
+
 class game:
 
     def is_valid_value(self, char):
@@ -228,7 +230,7 @@ class game:
                 # worker on goal push box to goal
                 self.move_box(current[0]+x, current[1]+y, x, y)
                 self.set_content(current[0], current[1], '.')
-                self.set_content(current[0]+x, current[1]+y, '+')
+                self.set_content(current[0]+x, current[1]+y, '@')
                 if save:
                     self.queue.put((x, y, True))
             elif char == '+' and future == '*' and future_box == ' ':
@@ -345,27 +347,36 @@ def start_game():
         sys.exit(2)
 
 
-# wall = pygame.image.load('images/wall.png')
-# floor = pygame.image.load('images/floor.png')
-# box = pygame.image.load('images/box.png')
-# box_docked = pygame.image.load('images/box_docked.png')
-# worker = pygame.image.load('tiny_robot.png')
-# worker_docked = pygame.image.load('images/worker_dock.png')
-# docker = pygame.image.load('images/dock.png')
-
+wall = pygame.image.load('images/wall.png')
+floor = pygame.image.load('images/floor.png')
+box = pygame.image.load('images/box.png')
+box_docked = pygame.image.load('images/box_docked.png')
+worker = pygame.image.load('images/worker.png')
+worker_docked = pygame.image.load('images/worker_dock.png')
+docker = pygame.image.load('images/dock.png')
+background = 255, 226, 191
 pygame.init()
 level = start_game()
 game = game('levels', level)
-# size = game.load_size()
-# screen = pygame.display.set_mode(size)
-basic_map = Basic_Map(game.get_matrix())
-real_time_display = Real_Time_Display(basic_map)
+
+
 moves = []
 index = 0
-real_time_display.run(moves)
+
+DISPLAY_REAL_TIME = False
+
+if DISPLAY_REAL_TIME:
+    basic_map = Basic_Map(game.get_matrix())
+    real_time_display = Real_Time_Display(basic_map)
+    real_time_display.run(moves)
+else:
+    size = game.load_size()
+    screen = pygame.display.set_mode(size)
+
 while 1:
     if game.is_completed():
         break
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit(0)
@@ -384,10 +395,13 @@ while 1:
                 sys.exit(0)
             # elif event.key == pygame.K_d:
             #     game.unmove()
-    if len(moves) > 0:
+    if len(moves) > 0 and DISPLAY_REAL_TIME:
         real_time_display.run(moves)
         moves = []
         index += 1
         index = index % len(game.robots)
+    
+    if not DISPLAY_REAL_TIME:
+        print_game(game.matrix, screen)
 
     pygame.display.update()
