@@ -142,6 +142,18 @@ class game:
     #                           movement[1], movement[0] * -1, movement[1] * -1)
     #         else:
     #             self.move(movement[0] * -1, movement[1] * -1, False)
+    def action(self, choice):
+        if choice == 0:
+            moves = game.move(0, -1, True, index)
+        elif choice == 1:
+            moves = game.move(0, 1, True, index)
+        elif choice == 2:
+            moves = game.move(-1, 0, True, index)
+        elif choice == 3:
+            moves = game.move(1, 0, True, index)
+        elif choice == 4:
+            moves = [Move((0,0),(0,0))]
+        return moves
 
     def move(self, x, y, save, index):
         moves = []
@@ -382,21 +394,22 @@ while 1:
             sys.exit(0)
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
-                moves = game.move(0, -1, True, index)
+                moves = game.action(0)
             elif event.key == pygame.K_DOWN:
-                moves = game.move(0, 1, True, index)
+                moves = game.action(1)
             elif event.key == pygame.K_LEFT:
-                moves = game.move(-1, 0, True, index)
+                moves = game.action(2)
             elif event.key == pygame.K_RIGHT:
-                moves = game.move(1, 0, True, index)
+                moves = game.action(3)
             elif event.key == pygame.K_f:
-                moves = [Move((0,0),(0,0))]
+                moves = game.action(4)
             elif event.key == pygame.K_q:
                 sys.exit(0)
             # elif event.key == pygame.K_d:
             #     game.unmove()
-    if len(moves) > 0 and DISPLAY_REAL_TIME:
-        real_time_display.run(moves)
+    if len(moves) > 0:
+        if(DISPLAY_REAL_TIME):
+            real_time_display.run(moves)
         moves = []
         index += 1
         index = index % len(game.robots)
