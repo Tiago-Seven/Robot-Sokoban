@@ -260,6 +260,11 @@ class game:
                 if save:
                     self.queue.put((x, y, True))
             self.robots[index] = (current[0]+x, current[1]+y)
+        else:
+            moves.append(Move(
+                (0, 0),
+                (0, 0)
+            ))
         return moves
 
 
@@ -375,7 +380,7 @@ game = game('levels', level)
 moves = []
 index = 0
 
-DISPLAY_REAL_TIME = False
+DISPLAY_REAL_TIME = True
 
 if DISPLAY_REAL_TIME:
     basic_map = Basic_Map(game.get_matrix())
@@ -384,7 +389,7 @@ if DISPLAY_REAL_TIME:
 else:
     size = game.load_size()
     screen = pygame.display.set_mode(size)
-
+move_array = []
 while 1:
     if game.is_completed():
         break
@@ -408,12 +413,16 @@ while 1:
             # elif event.key == pygame.K_d:
             #     game.unmove()
     if len(moves) > 0:
-        if(DISPLAY_REAL_TIME):
-            real_time_display.run(moves)
+        for move in moves:
+            move_array.append(move)
         moves = []
         index += 1
+        if(DISPLAY_REAL_TIME and index == len(game.robots)):
+            print(move_array)
+            real_time_display.run(move_array)
+            move_array = []
         index = index % len(game.robots)
-    
+            
     if not DISPLAY_REAL_TIME:
         print_game(game.matrix, screen)
 
