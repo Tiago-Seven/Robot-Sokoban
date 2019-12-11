@@ -363,6 +363,13 @@ def start_game():
         print("ERROR: Invalid Level: "+str(level))
         sys.exit(2)
 
+def checkSameBox(moves):
+    for i, move in enumerate(moves):
+        for move2 in moves[i:]:
+            if(move.end[0] == move2.start[0] and move.end[1] == move2.start[1]):
+                return True
+    return False
+
 
 wall = pygame.image.load('images/wall.png')
 floor = pygame.image.load('images/floor.png')
@@ -389,7 +396,9 @@ if DISPLAY_REAL_TIME:
 else:
     size = game.load_size()
     screen = pygame.display.set_mode(size)
+    
 move_array = []
+boxes_moves = []
 while 1:
     if game.is_completed():
         break
@@ -413,6 +422,16 @@ while 1:
             # elif event.key == pygame.K_d:
             #     game.unmove()
     if len(moves) > 0:
+        if(len(moves) > 1):
+            boxes_moves.append(moves[1])
+
+        if(checkSameBox(boxes_moves)):
+            real_time_display.run(move_array)
+            real_time_display.run(moves)
+            move_array = []
+            boxes_moves =  []
+            moves = []
+            
         for move in moves:
             move_array.append(move)
         moves = []
@@ -421,6 +440,7 @@ while 1:
             print(move_array)
             real_time_display.run(move_array)
             move_array = []
+            boxes_moves =  []
         index = index % len(game.robots)
             
     if not DISPLAY_REAL_TIME:
