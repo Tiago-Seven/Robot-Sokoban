@@ -1,14 +1,28 @@
 #!../bin/python
 
 import sys
+import math
 import pygame
 import string
 import queue
+import numpy as np
 
 from real_time_display import Basic_Map, Real_Time_Display
 from utils import Move
 
-class game:
+class Game:
+    ACTION_SPACE_SIZE = 5
+    
+    convert = {
+        "#": 0,     # wall
+        " ": 0.2,   # floor
+        ".": 0.3,   # dock
+        "$": 0.5,   # box
+        "*": 0.6,   # box on dock
+        "+": 0.7,   # worker on dock
+        "@": 0.8   # worker on floor
+        # current robot 1
+    }
 
     def is_valid_value(self, char):
         if (char == ' ' or  # floor
@@ -28,6 +42,8 @@ class game:
         self.queue = queue.LifoQueue()
         self.matrix = []
         self.robots = []
+        self.index = 0
+        self.episode_step = 0
         if level < 1:
             print("ERROR: Level "+str(level)+" is out of range")
             sys.exit(1)
@@ -98,14 +114,14 @@ class game:
         else:
             print("ERROR: Value '"+content+"' to be added is not valid")
 
-    def can_move(self, x, y, index):
-        return self.get_content(self.robots[index][0]+x, self.robots[index][1]+y) not in ['#', '*', '$', '@']
+    def can_move(self, x, y):
+        return self.get_content(self.robots[self.index][0]+x, self.robots[self.index][1]+y) not in ['#', '*', '$', '@']
 
-    def next(self, x, y, index):
-        return self.get_content(self.robots[index][0]+x, self.robots[index][1]+y)
+    def next(self, x, y):
+        return self.get_content(self.robots[self.index][0]+x, self.robots[self.index][1]+y)
 
-    def can_push(self, x, y, index):
-        return (self.next(x, y, index) in ['*', '$'] and self.next(x+x, y+y, index) in [' ', '.'])
+    def can_push(self, x, y):
+        return (self.next(x, y) in ['*', '$'] and self.next(x+x, y+y) in [' ', '.'])
 
     def is_completed(self):
         for row in self.matrix:
@@ -144,23 +160,29 @@ class game:
     #             self.move(movement[0] * -1, movement[1] * -1, False)
     def action(self, choice):
         if choice == 0:
-            moves = game.move(0, -1, True, index)
+            moves = self.move(0, -1, True)
         elif choice == 1:
-            moves = game.move(0, 1, True, index)
+            moves = self.move(0, 1, True)
         elif choice == 2:
-            moves = game.move(-1, 0, True, index)
+            moves = self.move(-1, 0, True)
         elif choice == 3:
-            moves = game.move(1, 0, True, index)
+            moves = self.move(1, 0, True)
         elif choice == 4:
             moves = [Move((0,0),(0,0))]
+        else:
+            print("choice not supported")
+            print(choice)
+
+        self.index += 1
+        self.index = self.index % len(self.robots)
         return moves
 
-    def move(self, x, y, save, index):
+    def move(self, x, y, save):
         moves = []
-        if self.can_move(x, y, index):
-            current = self.robots[index]
+        if self.can_move(x, y):
+            current = self.robots[self.index]
             char = self.get_content(current[0], current[1])
-            future = self.next(x, y, index)
+            future = self.next(x, y)
             moves.append(Move(
                 (current[0], current[1]),
                 (current[0]+x, current[1]+y)
@@ -189,12 +211,12 @@ class game:
                 self.set_content(current[0], current[1], '.')
                 if save:
                     self.queue.put((x, y, False))
-            self.robots[index] = (current[0]+x, current[1]+y)
-        elif self.can_push(x, y, index):
-            current = self.robots[index]
+            self.robots[self.index] = (current[0]+x, current[1]+y)
+        elif self.can_push(x, y):
+            current = self.robots[self.index]
             char = self.get_content(current[0], current[1])
-            future = self.next(x, y, index)
-            future_box = self.next(x+x, y+y, index)
+            future = self.next(x, y)
+            future_box = self.next(x+x, y+y)
             moves.append(Move(
                 (current[0], current[1]),
                 (current[0]+x, current[1]+y)
@@ -259,13 +281,56 @@ class game:
                 self.set_content(current[0]+x, current[1]+y, '+')
                 if save:
                     self.queue.put((x, y, True))
-            self.robots[index] = (current[0]+x, current[1]+y)
+            self.robots[self.index] = (current[0]+x, current[1]+y)
         else:
             moves.append(Move(
                 (0, 0),
                 (0, 0)
             ))
         return moves
+
+    def step(self, action):
+        self.action(action)
+        self.episode_step += 1
+        if self.episode_step > 50:
+            return self.get_state(), self.reward(), True
+        else:
+            return self.get_state(), self.reward(), self.is_completed()
+
+    def get_state(self):
+        state = np.zeros((10,7,1))
+        x = 0
+        y = 0
+        for row in self.matrix:
+            for char in row:
+                state[y][x]=[self.convert[char]]
+                x = x + 1
+            x = 0
+            y = y + 1
+        state[self.robots[self.index][1],self.robots[self.index][0]] = [1]
+        return state
+
+    def reward(self):
+        goal = []
+        x = 0
+        y = 0
+        for row in self.matrix:
+            for char in row:
+                if char == "." or char == "+":
+                    goal = (x,y)
+                x = x + 1
+            x = 0
+            y = y + 1
+        if(self.is_completed()):
+            return 2/self.episode_step
+        elif self.robots[self.index][0] == goal[0] and self.robots[self.index][1] == goal[1]:
+            return 1/self.episode_step
+        else:
+            return (1.0/math.sqrt(
+                (self.robots[self.index][0] - goal[0])**2 + 
+                (self.robots[self.index][1] - goal[1])**2
+                ))/self.episode_step
+        
 
 
 def print_game(matrix, screen):
@@ -371,79 +436,77 @@ def checkSameBox(moves):
     return False
 
 
-wall = pygame.image.load('images/wall.png')
-floor = pygame.image.load('images/floor.png')
-box = pygame.image.load('images/box.png')
-box_docked = pygame.image.load('images/box_docked.png')
-worker = pygame.image.load('images/worker.png')
-worker_docked = pygame.image.load('images/worker_dock.png')
-docker = pygame.image.load('images/dock.png')
-background = 255, 226, 191
-pygame.init()
-level = start_game()
-game = game('levels', level)
+# wall = pygame.image.load('images/wall.png')
+# floor = pygame.image.load('images/floor.png')
+# box = pygame.image.load('images/box.png')
+# box_docked = pygame.image.load('images/box_docked.png')
+# worker = pygame.image.load('images/worker.png')
+# worker_docked = pygame.image.load('images/worker_dock.png')
+# docker = pygame.image.load('images/dock.png')
+# background = 255, 226, 191
+# pygame.init()
+# level = start_game()
+# game = game('levels', level)
 
 
-moves = []
-index = 0
+# moves = []
 
-DISPLAY_REAL_TIME = True
+# DISPLAY_REAL_TIME = True
 
-if DISPLAY_REAL_TIME:
-    basic_map = Basic_Map(game.get_matrix())
-    real_time_display = Real_Time_Display(basic_map)
-    real_time_display.run(moves)
-else:
-    size = game.load_size()
-    screen = pygame.display.set_mode(size)
+# if DISPLAY_REAL_TIME:
+#     basic_map = Basic_Map(game.get_matrix())
+#     real_time_display = Real_Time_Display(basic_map)
+#     real_time_display.run(moves)
+# else:
+#     size = game.load_size()
+#     screen = pygame.display.set_mode(size)
     
-move_array = []
-boxes_moves = []
-while 1:
-    if game.is_completed():
-        break
+# move_array = []
+# boxes_moves = []
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            sys.exit(0)
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP:
-                moves = game.action(0)
-            elif event.key == pygame.K_DOWN:
-                moves = game.action(1)
-            elif event.key == pygame.K_LEFT:
-                moves = game.action(2)
-            elif event.key == pygame.K_RIGHT:
-                moves = game.action(3)
-            elif event.key == pygame.K_f:
-                moves = game.action(4)
-            elif event.key == pygame.K_q:
-                sys.exit(0)
-            # elif event.key == pygame.K_d:
-            #     game.unmove()
-    if len(moves) > 0:
-        if(len(moves) > 1):
-            boxes_moves.append(moves[1])
+# while 1:
+#     if game.is_completed():
+#         break
+#     for event in pygame.event.get():
+#         if event.type == pygame.QUIT:
+#             sys.exit(0)
+#         elif event.type == pygame.KEYDOWN:
+#             game.get_state()
+#             if event.key == pygame.K_UP:
+#                 moves = game.action(0)
+#             elif event.key == pygame.K_DOWN:
+#                 moves = game.action(1)
+#             elif event.key == pygame.K_LEFT:
+#                 moves = game.action(2)
+#             elif event.key == pygame.K_RIGHT:
+#                 moves = game.action(3)
+#             elif event.key == pygame.K_f:
+#                 moves = game.action(4)
+#             elif event.key == pygame.K_q:
+#                 sys.exit(0)
+#             # elif event.key == pygame.K_d:
+#             #     game.unmove()
+#     if len(moves) > 0:
+#         if(len(moves) > 1):
+#             boxes_moves.append(moves[1])
 
-        if(checkSameBox(boxes_moves)):
-            real_time_display.run(move_array)
-            real_time_display.run(moves)
-            move_array = []
-            boxes_moves =  []
-            moves = []
+#         if(checkSameBox(boxes_moves)):
+#             real_time_display.run(move_array)
+#             real_time_display.run(moves)
+#             move_array = []
+#             boxes_moves =  []
+#             moves = []
             
-        for move in moves:
-            move_array.append(move)
-        moves = []
-        index += 1
-        if(DISPLAY_REAL_TIME and index == len(game.robots)):
-            print(move_array)
-            real_time_display.run(move_array)
-            move_array = []
-            boxes_moves =  []
-        index = index % len(game.robots)
+#         for move in moves:
+#             move_array.append(move)
+#         moves = []
+#         if(DISPLAY_REAL_TIME and game.index == 0):
+#             print(move_array)
+#             real_time_display.run(move_array)
+#             move_array = []
+#             boxes_moves =  []
             
-    if not DISPLAY_REAL_TIME:
-        print_game(game.matrix, screen)
+#     if not DISPLAY_REAL_TIME:
+#         print_game(game.matrix, screen)
 
-    pygame.display.update()
+#     pygame.display.update()
