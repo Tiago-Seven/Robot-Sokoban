@@ -4,6 +4,9 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, Activation, Flatten
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard
+
+
+
 import tensorflow as tf
 from collections import deque
 import matplotlib.pyplot as plt
@@ -11,6 +14,7 @@ import time
 import random
 from tqdm import tqdm
 import os
+
 
 
 DISCOUNT = 0.99
@@ -24,7 +28,7 @@ MIN_REWARD = 0.1  # For model save
 MEMORY_FRACTION = 0.20
 
 # Environment settings
-EPISODES = 100
+EPISODES = 2000
 
 # Exploration settings
 epsilon = 1  # not a constant, going to be decayed
@@ -33,7 +37,7 @@ MIN_EPSILON = 0.001
 
 #  Stats settings
 AGGREGATE_STATS_EVERY = 50  # episodes
-SHOW_PREVIEW = False
+SHOW_PREVIEW = True
 
 print(dir(TensorBoard))
 
@@ -240,7 +244,7 @@ if not os.path.isdir('models'):
 #     def update_stats(self, **stats):
 #         self._write_logs(stats, self.step)
 
-from sokoban import Game
+from sokoban import Game,print_game
 game = Game('levels', 1)
 
 # Agent class
@@ -344,7 +348,8 @@ class DQNAgent:
 
         # Fit on all samples as one batch, log only on terminal state
         self.model.fit(np.array(X)/255, np.array(y), batch_size=MINIBATCH_SIZE, verbose=0,
-                       shuffle=False) if terminal_state else None
+                       shuffle=False)
+
 
         # Update target network counter every episode
         if terminal_state:
@@ -362,14 +367,23 @@ class DQNAgent:
 
 agent = DQNAgent()
 
+from keras.models import load_model
+
+# model.save('my_model.h5')
+
+agent.model = load_model('models/1stTest__1576511158.model')
+import pygame
+pygame.init()
+size = game.load_size()
+screen = pygame.display.set_mode(size)
 # Iterate over episodes
 for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
-
+    print(episode)
     # Update tensorboard step every episode
     # agent.tensorboard.step = episode
 
     # Restarting episode - reset episode reward and step number
-    episode_reward = 0
+    episode_reward = 0.0
     step = 1
 
     # Reset environment and get initial state
@@ -387,12 +401,17 @@ for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
             # Get random action
             action = np.random.randint(0, game.ACTION_SPACE_SIZE)
 
+        # only model actions
+        # action = np.argmax(agent.get_qs(current_state))
+
         new_state, reward, done = game.step(action)
         # Transform new continous state to new discrete state and count reward
         episode_reward += reward
 
-        if SHOW_PREVIEW and not episode % AGGREGATE_STATS_EVERY:
-            env.render()
+        # if SHOW_PREVIEW and episode > 4990:
+        #     print_game(game.matrix,screen)
+        #     pygame.display.update()
+            # print(game.matrix)
 
         # Every step we update replay memory and train main network
         agent.update_replay_memory(
@@ -405,21 +424,21 @@ for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
         step += 1
 
     # Append episode reward to a list and log stats (every given number of episodes)
-    ep_rewards.append(episode_reward)
-    # if not episode % AGGREGATE_STATS_EVERY or episode == 1:
-    #     average_reward = sum(
-    #         ep_rewards[-AGGREGATE_STATS_EVERY:])/len(ep_rewards[-AGGREGATE_STATS_EVERY:])
-    #     min_reward = min(ep_rewards[-AGGREGATE_STATS_EVERY:])
-    #     max_reward = max(ep_rewards[-AGGREGATE_STATS_EVERY:])
-    #     # agent.tensorboard.update_stats(
-    #     #     reward_avg=average_reward, reward_min=min_reward, reward_max=max_reward, epsilon=epsilon)
+    ep_rewards.append(episode_reward/step)
+    if not episode % AGGREGATE_STATS_EVERY or episode == 1:
+        average_reward = sum(
+            ep_rewards[-AGGREGATE_STATS_EVERY:])/len(ep_rewards[-AGGREGATE_STATS_EVERY:])
+        min_reward = min(ep_rewards[-AGGREGATE_STATS_EVERY:])
+        max_reward = max(ep_rewards[-AGGREGATE_STATS_EVERY:])
+        # agent.tensorboard.update_stats(
+        #     reward_avg=average_reward, reward_min=min_reward, reward_max=max_reward, epsilon=epsilon)
 
-    #     # Save model, but only when min reward is greater or equal a set value
-    #     if min_reward >= MIN_REWARD:
-    #         agent.model.save(
-    #             'models/{}__{}.model'.format(
-    #                 MODEL_NAME, int(time.time())
-    #             ))
+        # Save model, but only when min reward is greater or equal a set value
+        if min_reward >= MIN_REWARD:
+            agent.model.save(
+                'models/{}__{}.model'.format(
+                    MODEL_NAME, int(time.time())
+                ))
 
     # Decay epsilon
     if epsilon > MIN_EPSILON:

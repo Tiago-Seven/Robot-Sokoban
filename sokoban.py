@@ -312,24 +312,27 @@ class Game:
 
     def reward(self):
         goal = []
+        box = []
         x = 0
         y = 0
         for row in self.matrix:
             for char in row:
-                if char == "." or char == "+":
+                if char == "." or char == "*" or char =="+":
                     goal = (x,y)
+                if char == '$' or char == "*":
+                    box = (x,y)
                 x = x + 1
             x = 0
             y = y + 1
         if(self.is_completed()):
-            return 2/self.episode_step
-        elif self.robots[self.index][0] == goal[0] and self.robots[self.index][1] == goal[1]:
-            return 1/self.episode_step
+            return 50
+        elif box[0] == goal[0] and box[1] == goal[1]:
+            return 1
         else:
             return (1.0/math.sqrt(
-                (self.robots[self.index][0] - goal[0])**2 + 
-                (self.robots[self.index][1] - goal[1])**2
-                ))/self.episode_step
+                (box[0] - goal[0])**2 + 
+                (box[1] - goal[1])**2
+                ))
         
 
 
@@ -436,15 +439,19 @@ def checkSameBox(moves):
     return False
 
 
-# wall = pygame.image.load('images/wall.png')
-# floor = pygame.image.load('images/floor.png')
-# box = pygame.image.load('images/box.png')
-# box_docked = pygame.image.load('images/box_docked.png')
-# worker = pygame.image.load('images/worker.png')
-# worker_docked = pygame.image.load('images/worker_dock.png')
-# docker = pygame.image.load('images/dock.png')
-# background = 255, 226, 191
+
+
+wall = pygame.image.load('images/wall.png')
+floor = pygame.image.load('images/floor.png')
+box = pygame.image.load('images/box.png')
+box_docked = pygame.image.load('images/box_docked.png')
+worker = pygame.image.load('images/worker.png')
+worker_docked = pygame.image.load('images/worker_dock.png')
+docker = pygame.image.load('images/dock.png')
+background = 255, 226, 191
 # pygame.init()
+# size = game.load_size()
+# screen = pygame.display.set_mode(size)
 # level = start_game()
 # game = game('levels', level)
 
