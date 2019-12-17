@@ -4,7 +4,7 @@ import string
 import queue
 import numpy as np
 
-mode = "autonomous"
+mode = "play"
 
 if mode == "play": ########################### PLAY ###########################
   import pygame
@@ -21,7 +21,7 @@ if mode == "play": ########################### PLAY ###########################
 
   moves = []
 
-  DISPLAY_REAL_TIME = True
+  DISPLAY_REAL_TIME = False
 
   if DISPLAY_REAL_TIME:
       basic_map = Basic_Map(game.get_matrix())
@@ -223,23 +223,22 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
 
   DISPLAY_REAL_TIME = True
 
-  if DISPLAY_REAL_TIME:
-      basic_map = Basic_Map(game.get_matrix())
-      real_time_display = Real_Time_Display(basic_map)
-      real_time_display.run(moves)
-  else:
-      size = game.load_size()
-      screen = pygame.display.set_mode(size)
-  move_array = []
-  boxes_moves = []
-
-
 
   for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
     game = Game('levels', 1)
-    print(game.matrix)
+
+    if DISPLAY_REAL_TIME:
+      basic_map = Basic_Map(game.get_matrix())
+      real_time_display = Real_Time_Display(basic_map)
+      real_time_display.run(moves)
+    else:
+      size = game.load_size()
+      screen = pygame.display.set_mode(size)
+
+    move_array = []
+    boxes_moves = []
     done = False
-    print("manekl")
+
     while not done:
         action = np.argmax(agent.get_qs(game.get_state()))
         moves = game.action(action)
