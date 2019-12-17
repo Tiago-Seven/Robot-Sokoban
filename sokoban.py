@@ -2,14 +2,21 @@
 
 import sys
 import math
-import pygame
 import string
 import queue
 import numpy as np
 
-from real_time_display import Basic_Map, Real_Time_Display
-from utils import Move
+import pygame
+from utils import Move 
 
+background = 255, 226, 191
+wall = pygame.image.load('images/wall.png')
+floor = pygame.image.load('images/floor.png')
+box = pygame.image.load('images/box.png')
+box_docked = pygame.image.load('images/box_docked.png')
+worker = pygame.image.load('images/worker.png')
+worker_docked = pygame.image.load('images/worker_dock.png')
+docker = pygame.image.load('images/dock.png')
 class Game:
     ACTION_SPACE_SIZE = 5
     
@@ -298,7 +305,7 @@ class Game:
             return self.get_state(), self.reward(), self.is_completed()
 
     def get_state(self):
-        state = np.zeros((10,7,1))
+        state = np.zeros((len(self.matrix),max([len(row) for row in self.matrix]),1))
         x = 0
         y = 0
         for row in self.matrix:
@@ -437,83 +444,3 @@ def checkSameBox(moves):
             if(move.end[0] == move2.start[0] and move.end[1] == move2.start[1]):
                 return True
     return False
-
-
-
-
-wall = pygame.image.load('images/wall.png')
-floor = pygame.image.load('images/floor.png')
-box = pygame.image.load('images/box.png')
-box_docked = pygame.image.load('images/box_docked.png')
-worker = pygame.image.load('images/worker.png')
-worker_docked = pygame.image.load('images/worker_dock.png')
-docker = pygame.image.load('images/dock.png')
-background = 255, 226, 191
-# pygame.init()
-# size = game.load_size()
-# screen = pygame.display.set_mode(size)
-# level = start_game()
-# game = game('levels', level)
-
-
-# moves = []
-
-# DISPLAY_REAL_TIME = True
-
-# if DISPLAY_REAL_TIME:
-#     basic_map = Basic_Map(game.get_matrix())
-#     real_time_display = Real_Time_Display(basic_map)
-#     real_time_display.run(moves)
-# else:
-#     size = game.load_size()
-#     screen = pygame.display.set_mode(size)
-    
-# move_array = []
-# boxes_moves = []
-
-# while 1:
-#     if game.is_completed():
-#         break
-#     for event in pygame.event.get():
-#         if event.type == pygame.QUIT:
-#             sys.exit(0)
-#         elif event.type == pygame.KEYDOWN:
-#             game.get_state()
-#             if event.key == pygame.K_UP:
-#                 moves = game.action(0)
-#             elif event.key == pygame.K_DOWN:
-#                 moves = game.action(1)
-#             elif event.key == pygame.K_LEFT:
-#                 moves = game.action(2)
-#             elif event.key == pygame.K_RIGHT:
-#                 moves = game.action(3)
-#             elif event.key == pygame.K_f:
-#                 moves = game.action(4)
-#             elif event.key == pygame.K_q:
-#                 sys.exit(0)
-#             # elif event.key == pygame.K_d:
-#             #     game.unmove()
-#     if len(moves) > 0:
-#         if(len(moves) > 1):
-#             boxes_moves.append(moves[1])
-
-#         if(checkSameBox(boxes_moves)):
-#             real_time_display.run(move_array)
-#             real_time_display.run(moves)
-#             move_array = []
-#             boxes_moves =  []
-#             moves = []
-            
-#         for move in moves:
-#             move_array.append(move)
-#         moves = []
-#         if(DISPLAY_REAL_TIME and game.index == 0):
-#             print(move_array)
-#             real_time_display.run(move_array)
-#             move_array = []
-#             boxes_moves =  []
-            
-#     if not DISPLAY_REAL_TIME:
-#         print_game(game.matrix, screen)
-
-#     pygame.display.update()
