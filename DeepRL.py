@@ -100,7 +100,7 @@ class DQNAgent:
         model = Sequential()
 
         # OBSERVATION_SPACE_VALUES = (10, 10, 3) a 10x10 RGB image.
-        model.add(Conv2D(100, (3, 3), input_shape=(10,7,1), padding='same'))
+        model.add(Conv2D(100, (3, 3), input_shape=(10,11,1), padding='same'))
         model.add(Activation('relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.2))

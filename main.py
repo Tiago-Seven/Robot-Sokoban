@@ -4,7 +4,7 @@ import string
 import queue
 import numpy as np
 
-mode = "play"
+mode = "train"
 
 if mode == "play": ########################### PLAY ###########################
   import pygame
@@ -14,7 +14,7 @@ if mode == "play": ########################### PLAY ###########################
   
   pygame.init()
   level = start_game()
-  game = Game('levels', level)
+  game = Game('training_levels', level)
   size = game.load_size()
   screen = pygame.display.set_mode(size)
   
@@ -99,12 +99,12 @@ elif mode == "train": ########################### TRAIN ########################
   MIN_REPLAY_MEMORY_SIZE = 1000
   MINIBATCH_SIZE = 64  # How many steps (samples) to use for training
   UPDATE_TARGET_EVERY = 5  # Terminal states (end of episodes)
-  MODEL_NAME = '1stTest'
+  MODEL_NAME = 'multipleMaps'
   MIN_REWARD = 0.1  # For model save
   MEMORY_FRACTION = 0.20
 
   # Environment settings
-  EPISODES = 5000
+  EPISODES = 50
 
   # Exploration settings
   epsilon = 1  # not a constant, going to be decayed
@@ -120,8 +120,8 @@ elif mode == "train": ########################### TRAIN ########################
   # For more repetitive results
   np.random.seed(1)
   np.random.seed(1)
-
-  game = Game('levels', 1)
+  level = np.random.randint(1, 23)
+  game = Game('training_levels', level)
   agent = DQNAgent()
 
   if (load):
@@ -138,7 +138,8 @@ elif mode == "train": ########################### TRAIN ########################
     step = 1
 
     # Reset environment and get initial state
-    game = Game('levels', 1)
+    level = np.random.randint(1, 23)
+    game = Game('training_levels', level)
     current_state = game.get_state()
     # Reset flag and start iterating until episode ends
     done = False
@@ -214,7 +215,7 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
   agent = DQNAgent()
   agent.model = load_model(load_model_name)
 
-  game = Game('levels', 1)
+  game = Game('training_levels', 1)
   pygame.init()
   size = game.load_size()
   screen = pygame.display.set_mode(size)
@@ -225,7 +226,7 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
 
 
   for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
-    game = Game('levels', 1)
+    game = Game('training_levels', 1)
 
     if DISPLAY_REAL_TIME:
       basic_map = Basic_Map(game.get_matrix())

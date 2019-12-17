@@ -51,6 +51,7 @@ class Game:
         self.robots = []
         self.index = 0
         self.episode_step = 0
+        self.level = level
         if level < 1:
             print("ERROR: Level "+str(level)+" is out of range")
             sys.exit(1)
@@ -305,11 +306,15 @@ class Game:
             return self.get_state(), self.reward(), self.is_completed()
 
     def get_state(self):
-        state = np.zeros((len(self.matrix),max([len(row) for row in self.matrix]),1))
+        state = np.zeros((10,11,1))
         x = 0
         y = 0
+        print(self.level)
+        print(state)
+        print(self.matrix)
         for row in self.matrix:
             for char in row:
+                print(x,y)
                 state[y][x]=[self.convert[char]]
                 x = x + 1
             x = 0
