@@ -5,6 +5,7 @@ import math
 import string
 import queue
 import numpy as np
+import random
 
 import pygame
 from utils import Move 
@@ -43,7 +44,7 @@ class Game:
         else:
             return False
 
-    def __init__(self, filename, level):
+    def __init__(self, filename, level, n_robots = 1):
         #if level < 1 or level > 50:
         level = int(level)
         self.queue = queue.LifoQueue()
@@ -52,6 +53,7 @@ class Game:
         self.index = 0
         self.episode_step = 0
         self.level = level
+        self.n_robots = n_robots
         if level < 1:
             print("ERROR: Level "+str(level)+" is out of range")
             sys.exit(1)
@@ -79,7 +81,9 @@ class Game:
                     else:
                         break
         self.robots = self.get_robots()
-    
+        if len(self.robots) == 0:
+            self.robots = self.set_robots()
+
     def get_robots(self):
         x = 0
         y = 0
@@ -94,6 +98,25 @@ class Game:
             x = 0
             y = y + 1
         return robots
+
+    def set_robots(self):
+        robots = []
+        x = 0
+        y = 0
+        for row in self.matrix:
+            for char in row:
+                if char == " " :
+                    robots.append((x, y,"@"))
+                if char == ".":
+                    robots.append((x, y,"+"))
+                x = x + 1
+            x = 0
+            y = y + 1
+
+        robots = random.sample(robots, self.n_robots)
+        for robot in robots:
+            self.set_content(robot[0], robot[1], robot[2])
+        return [(robot[0], robot[1]) for robot in robots]
 
     def load_size(self):
         x = 0
@@ -309,12 +332,8 @@ class Game:
         state = np.zeros((10,11,1))
         x = 0
         y = 0
-        print(self.level)
-        print(state)
-        print(self.matrix)
         for row in self.matrix:
             for char in row:
-                print(x,y)
                 state[y][x]=[self.convert[char]]
                 x = x + 1
             x = 0
