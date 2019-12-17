@@ -4,7 +4,7 @@ import string
 import queue
 import numpy as np
 
-mode = "train"
+mode = "autonomous"
 
 if mode == "play": ########################### PLAY ###########################
   import pygame
@@ -88,7 +88,7 @@ elif mode == "train": ########################### TRAIN ########################
   from DeepRL import DQNAgent
 
   ## INPUT
-  load = True
+  load = False
   load_model_name = "models/1stTest__1576587247.model"
 
 
@@ -104,7 +104,7 @@ elif mode == "train": ########################### TRAIN ########################
   MEMORY_FRACTION = 0.20
 
   # Environment settings
-  EPISODES = 50
+  EPISODES = 5000
 
   # Exploration settings
   epsilon = 1  # not a constant, going to be decayed
@@ -209,7 +209,7 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
   from DeepRL import DQNAgent
   EPISODES = 2
 
-  load_model_name = "models/1stTest__1576587742.model"
+  load_model_name = "models/1stTest__1576591913.model"
 
   agent = DQNAgent()
   agent.model = load_model(load_model_name)
@@ -230,7 +230,6 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
   else:
       size = game.load_size()
       screen = pygame.display.set_mode(size)
-      
   move_array = []
   boxes_moves = []
 
@@ -238,31 +237,36 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
 
   for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
     game = Game('levels', 1)
+    print(game.matrix)
     done = False
+    print("manekl")
     while not done:
-      action = np.argmax(agent.get_qs(game.get_state()))
-      moves = game.action(action)
-      if len(moves) > 0 and DISPLAY_REAL_TIME:
-          if(len(moves) > 1):
-              boxes_moves.append(moves[1])
+        action = np.argmax(agent.get_qs(game.get_state()))
+        moves = game.action(action)
+        if len(moves) > 0 and DISPLAY_REAL_TIME:
+            if(len(moves) > 1):
+                boxes_moves.append(moves[1])
 
-          if(checkSameBox(boxes_moves)):
-              real_time_display.run(move_array)
-              real_time_display.run(moves)
-              move_array = []
-              boxes_moves =  []
-              moves = []
+            if(checkSameBox(boxes_moves)):
+                real_time_display.run(move_array)
+                real_time_display.run(moves)
+                move_array = []
+                boxes_moves =  []
+                moves = []
               
-          for move in moves:
-              move_array.append(move)
-          moves = []
-          if(game.index == 0):
-              print(move_array)
-              real_time_display.run(move_array)
-              move_array = []
-              boxes_moves =  []
+            for move in moves:
+                move_array.append(move)
+            moves = []
+            if(game.index == 0):
+                print(move_array)
+                real_time_display.run(move_array)
+                move_array = []
+                boxes_moves =  []
               
-      if not DISPLAY_REAL_TIME:
-          print_game(game.matrix, screen)
+        if not DISPLAY_REAL_TIME:
+            print_game(game.matrix, screen)
 
-      pygame.display.update()
+        pygame.display.update()
+        if game.is_completed():
+            print("done true")
+            done=True
