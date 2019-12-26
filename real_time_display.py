@@ -75,7 +75,7 @@ class Real_Time_Display:
         clock = pygame.time.Clock()
         pygame.display.set_caption("First Class!")
 
-        fps_limit = 30
+        fps_limit = 60
         run_me = True
         n = 0
 

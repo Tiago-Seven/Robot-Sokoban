@@ -89,41 +89,34 @@ elif mode == "train": ########################### TRAIN ########################
 
   ## INPUT
   load = False
-  load_model_name = "models/1stTest__1576587247.model"
+  load_model_name = "models/multipleMaps__1576623075.model"
 
-
-
-  DISCOUNT = 0.99
-  REPLAY_MEMORY_SIZE = 50000  # How many last steps to keep for model training
-  # Minimum number of steps in a memory to start training
-  MIN_REPLAY_MEMORY_SIZE = 1000
-  MINIBATCH_SIZE = 64  # How many steps (samples) to use for training
-  UPDATE_TARGET_EVERY = 5  # Terminal states (end of episodes)
-  MODEL_NAME = 'multipleMaps'
+  MODEL_NAME = 'denseNN_normalReward'
   MIN_REWARD = 0.1  # For model save
-  MEMORY_FRACTION = 0.20
 
   # Environment settings
-  EPISODES = 50
+  EPISODES = 5000
 
   # Exploration settings
   epsilon = 1  # not a constant, going to be decayed
-  EPSILON_DECAY = 0.99975
+  EPSILON_DECAY = 0.9995 #99975
   MIN_EPSILON = 0.001
 
   #  Stats settings
-  AGGREGATE_STATS_EVERY = 50  # episodes
+  AGGREGATE_STATS_EVERY = 100  # episodes
 
   # For stats
-  ep_rewards = [0]
-  
+  ep_rewards = []
+  chosen_moves = []
   # For more repetitive results
-  np.random.seed(1)
-  np.random.seed(1)
-  level = np.random.randint(1, 23)
-  game = Game('training_levels', level)
-  agent = DQNAgent()
+  np.random.seed(2)
 
+  agent = DQNAgent()
+  # from keras.utils import plot_model
+  # import os
+  # os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin/'
+  # plot_model(agent.model, to_file='NN_model.png', show_shapes=True,)
+  # exit()
   if (load):
     from keras.models import load_model
     agent.model = load_model(load_model_name)
@@ -138,7 +131,8 @@ elif mode == "train": ########################### TRAIN ########################
     step = 1
 
     # Reset environment and get initial state
-    level = np.random.randint(1, 23)
+    # level = np.random.randint(1, 3)
+    level=1
     game = Game('training_levels', level)
     current_state = game.get_state()
     # Reset flag and start iterating until episode ends
@@ -148,6 +142,10 @@ elif mode == "train": ########################### TRAIN ########################
       if np.random.random() > epsilon:
           # Get action from Q table
           action = np.argmax(agent.get_qs(current_state))
+          chosen_moves.append(action)
+          # print("above action")
+          # print(action)
+          # print("below action")
       else:
           # Get random action
           action = np.random.randint(0, game.ACTION_SPACE_SIZE)
@@ -198,6 +196,8 @@ elif mode == "train": ########################### TRAIN ########################
 
   plt.plot(ep_rewards)
   plt.show()
+  plt.plot(chosen_moves)
+  plt.show()
 elif mode == "autonomous": ########################### AUTONOMOUS ###########################
   from keras.models import load_model
   import pygame
@@ -208,14 +208,14 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
   from utils import Move 
 
   from DeepRL import DQNAgent
-  EPISODES = 2
+  EPISODES = 10
 
-  load_model_name = "models/1stTest__1576591913.model"
+  load_model_name = "models/denseNN_normalReward__1577395708.model"
 
   agent = DQNAgent()
   agent.model = load_model(load_model_name)
 
-  game = Game('training_levels', 1)
+  game = Game('training_levels', 2)
   pygame.init()
   size = game.load_size()
   screen = pygame.display.set_mode(size)
@@ -226,7 +226,7 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
 
 
   for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
-    game = Game('training_levels', 1)
+    game = Game('training_levels', 2)
 
     if DISPLAY_REAL_TIME:
       basic_map = Basic_Map(game.get_matrix())
@@ -270,3 +270,10 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
         if game.is_completed():
             print("done true")
             done=True
+
+        for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    done=True
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_q:
+                        done=True

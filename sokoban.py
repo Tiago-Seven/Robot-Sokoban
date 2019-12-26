@@ -179,16 +179,6 @@ class Game:
             self.set_content(x+a, y+b, '*')
             self.set_content(x, y, '.')
 
-    # def unmove(self):
-    #     if not self.queue.empty():
-    #         movement = self.queue.get()
-    #         if movement[2]:
-    #             current = self.worker()
-    #             self.move(movement[0] * -1, movement[1] * -1, False)
-    #             self.move_box(current[0]+movement[0], current[1] +
-    #                           movement[1], movement[0] * -1, movement[1] * -1)
-    #         else:
-    #             self.move(movement[0] * -1, movement[1] * -1, False)
     def action(self, choice):
         if choice == 0:
             moves = self.move(0, -1, True)
@@ -338,7 +328,8 @@ class Game:
                 x = x + 1
             x = 0
             y = y + 1
-        state[self.robots[self.index][1],self.robots[self.index][0]] = [1]
+        if state[self.robots[self.index][1],self.robots[self.index][0]] != 0.7: #robot on dock
+            state[self.robots[self.index][1],self.robots[self.index][0]] = [1]
         return state
 
     def reward(self):
@@ -364,6 +355,16 @@ class Game:
                 (box[0] - goal[0])**2 + 
                 (box[1] - goal[1])**2
                 ))
+            # return (1.0/(
+            #     math.sqrt(
+            #         (box[0] - goal[0])**2 + 
+            #         (box[1] - goal[1])**2
+            #     )
+            #     +math.sqrt(
+            #         (self.robots[self.index][0] - box[0])**2 + 
+            #         (self.robots[self.index][1]- box[1])**2 
+            #     )
+            #     ))
         
 
 
