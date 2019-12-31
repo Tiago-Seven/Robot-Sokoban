@@ -99,22 +99,30 @@ class DQNAgent:
     def create_model(self):
         model = Sequential()
 
-        # OBSERVATION_SPACE_VALUES = (10, 10, 3) a 10x10 RGB image.
-        model.add(Conv2D(100, (3, 3), input_shape=(10,11,1), padding='same'))
+        model.add(Conv2D(64, (3, 3), input_shape=(10,11,1)))
         model.add(Activation('relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
+        # model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.2))
 
-        model.add(Conv2D(100, (3, 3),padding="same"))
+        model.add(Conv2D(128, (3, 3)))
         model.add(Activation('relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
+        # model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.2))
+
+        model.add(Conv2D(256, (3, 3)))
+        model.add(Activation('relu'))
+        # model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.2))
+
+        model.add(Conv2D(256, (4, 4)))
+        model.add(Activation('relu'))
+        # model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.2))
 
         # this converts our 3D feature maps to 1D feature vectors
         model.add(Flatten())
         model.add(Dense(64))
 
-        # ACTION_SPACE_SIZE = how many choices (9)
         model.add(Dense(Game.ACTION_SPACE_SIZE, activation='linear'))
         model.compile(loss="mse", optimizer=Adam(
             lr=0.001), metrics=['accuracy'])

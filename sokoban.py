@@ -8,7 +8,7 @@ import numpy as np
 import random
 
 import pygame
-from utils import Move 
+from utils import Move, closest_distance
 
 background = 255, 226, 191
 wall = pygame.image.load('images/wall.png')
@@ -83,6 +83,9 @@ class Game:
         self.robots = self.get_robots()
         if len(self.robots) == 0:
             self.robots = self.set_robots()
+        # print("reward: {}".format(self.reward()))
+        # exit()
+
 
     def get_robots(self):
         x = 0
@@ -333,38 +336,36 @@ class Game:
         return state
 
     def reward(self):
-        goal = []
-        box = []
+        goals= []
+        boxes = []
+        available_boxes = []
         x = 0
         y = 0
         for row in self.matrix:
             for char in row:
                 if char == "." or char == "*" or char =="+":
-                    goal = (x,y)
+                    goals.append((x,y))
                 if char == '$' or char == "*":
-                    box = (x,y)
+                    boxes.append((x,y))
+                if char == '$':
+                    available_boxes.append((x,y))
                 x = x + 1
             x = 0
             y = y + 1
         if(self.is_completed()):
-            return 50
-        elif box[0] == goal[0] and box[1] == goal[1]:
-            return 1
+            return 10
         else:
-            return (1.0/math.sqrt(
-                (box[0] - goal[0])**2 + 
-                (box[1] - goal[1])**2
-                ))
-            # return (1.0/(
-            #     math.sqrt(
-            #         (box[0] - goal[0])**2 + 
-            #         (box[1] - goal[1])**2
-            #     )
-            #     +math.sqrt(
-            #         (self.robots[self.index][0] - box[0])**2 + 
-            #         (self.robots[self.index][1]- box[1])**2 
-            #     )
-            #     ))
+            total = 0
+            bonus = 0
+            for box in boxes:
+                closest_dist = closest_distance(box,goals)
+                
+                if closest_dist != 0:
+                    total += closest_dist
+                else:
+                    bonus += 1
+            total += closest_distance(self.robots[self.index],available_boxes)
+            return 1/total + bonus
         
 
 

@@ -91,7 +91,7 @@ elif mode == "train": ########################### TRAIN ########################
   load = False
   load_model_name = "models/multipleMaps__1576623075.model"
 
-  MODEL_NAME = 'denseNN_normalReward'
+  MODEL_NAME = 'level5_better_reward_no_pooling_5000'
   MIN_REWARD = 0.1  # For model save
 
   # Environment settings
@@ -103,20 +103,20 @@ elif mode == "train": ########################### TRAIN ########################
   MIN_EPSILON = 0.001
 
   #  Stats settings
-  AGGREGATE_STATS_EVERY = 100  # episodes
+  AGGREGATE_STATS_EVERY = 200  # episodes
 
   # For stats
   ep_rewards = []
-  chosen_moves = []
+  # chosen_moves = []
   # For more repetitive results
   np.random.seed(2)
 
   agent = DQNAgent()
-  # from keras.utils import plot_model
-  # import os
-  # os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin/'
-  # plot_model(agent.model, to_file='NN_model.png', show_shapes=True,)
-  # exit()
+#   from keras.utils import plot_model
+#   import os
+#   os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin/'
+#   plot_model(agent.model, to_file='NN_model.png', show_shapes=True,)
+#   exit()
   if (load):
     from keras.models import load_model
     agent.model = load_model(load_model_name)
@@ -132,9 +132,10 @@ elif mode == "train": ########################### TRAIN ########################
 
     # Reset environment and get initial state
     # level = np.random.randint(1, 3)
-    level=1
+    level=5
     game = Game('training_levels', level)
     current_state = game.get_state()
+
     # Reset flag and start iterating until episode ends
     done = False
     while not done:
@@ -142,16 +143,13 @@ elif mode == "train": ########################### TRAIN ########################
       if np.random.random() > epsilon:
           # Get action from Q table
           action = np.argmax(agent.get_qs(current_state))
-          chosen_moves.append(action)
+          # chosen_moves.append(action)
           # print("above action")
           # print(action)
           # print("below action")
       else:
           # Get random action
           action = np.random.randint(0, game.ACTION_SPACE_SIZE)
-
-      # only model actions
-      # action = np.argmax(agent.get_qs(current_state))
 
       new_state, reward, done = game.step(action)
       # Transform new continous state to new discrete state and count reward
@@ -196,8 +194,6 @@ elif mode == "train": ########################### TRAIN ########################
 
   plt.plot(ep_rewards)
   plt.show()
-  plt.plot(chosen_moves)
-  plt.show()
 elif mode == "autonomous": ########################### AUTONOMOUS ###########################
   from keras.models import load_model
   import pygame
@@ -210,12 +206,12 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
   from DeepRL import DQNAgent
   EPISODES = 10
 
-  load_model_name = "models/denseNN_normalReward__1577395708.model"
+  load_model_name = "models/level5_reward0_1_2000__1577555248.model"
 
   agent = DQNAgent()
   agent.model = load_model(load_model_name)
 
-  game = Game('training_levels', 2)
+  game = Game('training_levels', 5)
   pygame.init()
   size = game.load_size()
   screen = pygame.display.set_mode(size)
@@ -226,7 +222,9 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
 
 
   for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
-    game = Game('training_levels', 2)
+    # level = np.random.randint(1, 3)
+    level=5
+    game = Game('training_levels', level)
 
     if DISPLAY_REAL_TIME:
       basic_map = Basic_Map(game.get_matrix())
