@@ -4,7 +4,7 @@ import string
 import queue
 import numpy as np
 
-mode = "train"
+mode = "new_training"
 
 if mode == "play": ########################### PLAY ###########################
   import pygame
@@ -91,15 +91,15 @@ elif mode == "train": ########################### TRAIN ########################
   load = False
   load_model_name = "models/multipleMaps__1576623075.model"
 
-  MODEL_NAME = 'level5_better_reward_no_pooling_5000'
-  MIN_REWARD = 0.1  # For model save
+  MODEL_NAME = 'big_map_1_goal_1_robot'
+  MIN_REWARD = 0.01  # For model save
 
   # Environment settings
-  EPISODES = 5000
+  EPISODES = 2000
 
   # Exploration settings
   epsilon = 1  # not a constant, going to be decayed
-  EPSILON_DECAY = 0.9995 #99975
+  EPSILON_DECAY = 0.998 #99975
   MIN_EPSILON = 0.001
 
   #  Stats settings
@@ -112,11 +112,11 @@ elif mode == "train": ########################### TRAIN ########################
   np.random.seed(2)
 
   agent = DQNAgent()
-#   from keras.utils import plot_model
-#   import os
-#   os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin/'
-#   plot_model(agent.model, to_file='NN_model.png', show_shapes=True,)
-#   exit()
+    #   from keras.utils import plot_model
+    #   import os
+    #   os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin/'
+    #   plot_model(agent.model, to_file='NN_model.png', show_shapes=True,)
+    #   exit()
   if (load):
     from keras.models import load_model
     agent.model = load_model(load_model_name)
@@ -132,7 +132,7 @@ elif mode == "train": ########################### TRAIN ########################
 
     # Reset environment and get initial state
     # level = np.random.randint(1, 3)
-    level=5
+    level=9
     game = Game('training_levels', level)
     current_state = game.get_state()
 
@@ -206,12 +206,12 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
   from DeepRL import DQNAgent
   EPISODES = 10
 
-  load_model_name = "models/level5_reward0_1_2000__1577555248.model"
+  load_model_name = "models/big_map_1_goal_1_robot__1578064903.model"
 
   agent = DQNAgent()
   agent.model = load_model(load_model_name)
 
-  game = Game('training_levels', 5)
+  game = Game('training_levels', 9)
   pygame.init()
   size = game.load_size()
   screen = pygame.display.set_mode(size)
@@ -223,7 +223,7 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
 
   for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
     # level = np.random.randint(1, 3)
-    level=5
+    level=9
     game = Game('training_levels', level)
 
     if DISPLAY_REAL_TIME:
@@ -275,3 +275,53 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:
                         done=True
+elif mode == "new_training":
+    from tqdm import tqdm
+    from keras.optimizers import Adam
+    from NewDeepRl import Agent
+    from sokoban import Game
+
+    optimizer = Adam(lr=0.01)
+    level=9
+    environment = Game('training_levels', level)
+    agent = Agent(environment, optimizer)
+
+    MIN_REWARD = 0
+
+    batch_size = 32
+    num_of_episodes = 100
+    timesteps_per_episode = 1000
+    agent.q_network.summary()
+    
+    for e in tqdm(range(0, num_of_episodes), ascii=True, unit='episodes'):
+        # Reset the environment
+        environment = Game('training_levels', level)
+        state = environment.get_state()
+        
+        # Initialize variables
+        reward = 0
+        terminated = False
+
+        
+        for timestep in range(timesteps_per_episode):
+            # Run Action
+            action = agent.act(state)
+            
+            # Take action    
+            next_state, reward, terminated = environment.step(action) 
+            agent.store(state, action, reward, next_state, terminated)
+            
+            state = next_state
+            
+            if terminated:
+                agent.align_target_model()
+                break
+                
+            if len(agent.experience_replay) > batch_size:
+                agent.retrain(batch_size)
+            
+            if min_reward >= MIN_REWARD:
+                agent.target_network.save(
+                    'models/{}__{}.model'.format(
+                        MODEL_NAME, int(time.time())
+                    ))
