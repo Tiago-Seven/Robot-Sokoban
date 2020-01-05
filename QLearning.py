@@ -3,6 +3,7 @@ from collections import defaultdict
 import itertools
 from sokoban import Game
 import matplotlib.pyplot as plt
+import hashlib
 
 def createEpsilonGreedyPolicy(Q, epsilon, num_actions): 
     """ 
@@ -19,7 +20,7 @@ def createEpsilonGreedyPolicy(Q, epsilon, num_actions):
         Action_probabilities = np.ones(num_actions, 
                 dtype = float) * epsilon / num_actions 
 
-        best_action = np.argmax(Q[hash(state.data.tobytes())]) 
+        best_action = np.argmax(Q[hashlib.sha224(state.data.tobytes()).hexdigest()]) 
         Action_probabilities[best_action] += (1.0 - epsilon) 
         return Action_probabilities 
    
@@ -28,7 +29,7 @@ def createEpsilonGreedyPolicy(Q, epsilon, num_actions):
 def qLearning(env, num_episodes, discount_factor = 0.5, 
                             alpha = 0.8):
 
-    epsilon = 0.2 #starting(will be decayed)
+    epsilon = 0.2 
     epsilon_decay = 0.99965
     """ 
     Q-Learning algorithm: Off-policy TD control. 
@@ -93,11 +94,11 @@ def qLearning(env, num_episodes, discount_factor = 0.5,
             # stats.episode_lengths[i_episode] = t 
                
             # TD Update 
-            best_next_action = np.argmax(Q[hash(next_state.data.tobytes())])     
-            td_target = reward + discount_factor * Q[hash(next_state.data.tobytes())][best_next_action] 
-            td_delta = td_target - Q[hash(state.data.tobytes())][action] 
+            best_next_action = np.argmax(Q[hashlib.sha224(next_state.data.tobytes()).hexdigest()])     
+            td_target = reward + discount_factor * Q[hashlib.sha224(next_state.data.tobytes()).hexdigest()][best_next_action] 
+            td_delta = td_target - Q[hashlib.sha224(state.data.tobytes()).hexdigest()][action] 
             
-            Q[hash(state.data.tobytes())][action] += alpha * td_delta 
+            Q[hashlib.sha224(state.data.tobytes()).hexdigest()][action] += alpha * td_delta 
 
             # done is True if episode terminated    
             if done: 

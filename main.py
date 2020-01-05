@@ -3,8 +3,10 @@ import math
 import string
 import queue
 import numpy as np
+import os
 
-mode = "q_learning"
+os.environ["PYTHONHASHSEED"] = "0"
+mode = "q_autonomous"
 
 if mode == "play": ########################### PLAY ###########################
   import pygame
@@ -347,6 +349,7 @@ elif mode == "q_learning":
    
     from real_time_display import Basic_Map, Real_Time_Display
     from utils import Move 
+    import hashlib
 
     EPISODES = 10
 
@@ -379,10 +382,115 @@ elif mode == "q_learning":
         done = False
 
         while not done:
-            print(Q[hash(game.get_state().data.tobytes())])
-            action = np.argmax(Q[hash(game.get_state().data.tobytes())])
+            print(Q[hashlib.sha224(game.get_state().data.tobytes()).hexdigest()])
+            action = np.argmax(Q[hashlib.sha224(game.get_state().data.tobytes()).hexdigest()])
             moves = game.action(action)
             if len(moves) > 0 and DISPLAY_REAL_TIME:
+                if(len(moves) > 1):
+                    boxes_moves.append(moves[1])
+
+                if(checkSameBox(boxes_moves)):
+                    real_time_display.run(move_array)
+                    real_time_display.run(moves)
+                    move_array = []
+                    boxes_moves =  []
+                    moves = []
+                
+                for move in moves:
+                    move_array.append(move)
+                moves = []
+                if(game.index == 0):
+                    print(move_array)
+                    real_time_display.run(move_array)
+                    move_array = []
+                    boxes_moves =  []
+                
+            if not DISPLAY_REAL_TIME:
+                print_game(game.matrix, screen)
+
+            pygame.display.update()
+            if game.is_completed():
+                print("done true")
+                done=True
+
+            for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        done=True
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_q:
+                            done=True
+elif mode == "q_autonomous":
+    import pygame
+    from tqdm import tqdm
+
+    from sokoban import Game, start_game, checkSameBox, print_game
+    from real_time_display import Basic_Map, Real_Time_Display
+    from utils import Move
+    import hashlib
+    const_hash = hashlib.sha256()
+
+    model_name = "opposite_corners.npy"
+    level = 14
+    Q = np.load(model_name)
+    Q = Q.item()
+    # print(type(Q))
+    # exit()
+    import pygame
+    from tqdm import tqdm
+
+   
+    from real_time_display import Basic_Map, Real_Time_Display
+    from utils import Move 
+
+    EPISODES = 10
+
+    # load_model_name = "models/big_map_1_goal_1_robot__1578064903.model"
+
+    game = Game('training_levels', level)
+    pygame.init()
+    size = game.load_size()
+    screen = pygame.display.set_mode(size)
+
+    moves = []
+
+    DISPLAY_REAL_TIME = True
+
+
+    for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
+        # level = np.random.randint(1, 3)
+        game = Game('training_levels', level)
+
+        if DISPLAY_REAL_TIME:
+            basic_map = Basic_Map(game.get_matrix())
+            real_time_display = Real_Time_Display(basic_map)
+            real_time_display.run(moves)
+        else:
+            size = game.load_size()
+            screen = pygame.display.set_mode(size)
+
+        move_array = []
+        boxes_moves = []
+        done = False
+        steps = 0
+        while not done:
+            print(Q[hashlib.sha224(game.get_state().data.tobytes()).hexdigest()])
+            action = np.argmax(Q[hashlib.sha224(game.get_state().data.tobytes()).hexdigest()])
+
+            if action == 0:
+                print("up")
+            elif action == 1:
+                print("down")
+            elif action == 2:
+                print("left")
+            elif action == 3:
+                print("right")
+            elif action == 4:
+                print("stop")
+
+            moves = game.action(action)
+            if len(moves) > 0 and DISPLAY_REAL_TIME:
+                steps += 1
+                print("step: {}".format(steps))
                 if(len(moves) > 1):
                     boxes_moves.append(moves[1])
 
