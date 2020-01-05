@@ -4,7 +4,7 @@ import string
 import queue
 import numpy as np
 
-mode = "new_training"
+mode = "q_learning"
 
 if mode == "play": ########################### PLAY ###########################
   import pygame
@@ -24,61 +24,63 @@ if mode == "play": ########################### PLAY ###########################
   DISPLAY_REAL_TIME = False
 
   if DISPLAY_REAL_TIME:
-      basic_map = Basic_Map(game.get_matrix())
-      real_time_display = Real_Time_Display(basic_map)
-      real_time_display.run(moves)
+    basic_map = Basic_Map(game.get_matrix())
+    real_time_display = Real_Time_Display(basic_map)
+    real_time_display.run(moves)
   else:
-      size = game.load_size()
-      screen = pygame.display.set_mode(size)
+    size = game.load_size()
+    screen = pygame.display.set_mode(size)
       
   move_array = []
   boxes_moves = []
-
+    
   while 1:
-      if game.is_completed():
-          break
-      for event in pygame.event.get():
-          if event.type == pygame.QUIT:
-              sys.exit(0)
-          elif event.type == pygame.KEYDOWN:
-              if event.key == pygame.K_UP:
-                  moves = game.action(0)
-              elif event.key == pygame.K_DOWN:
-                  moves = game.action(1)
-              elif event.key == pygame.K_LEFT:
-                  moves = game.action(2)
-              elif event.key == pygame.K_RIGHT:
-                  moves = game.action(3)
-              elif event.key == pygame.K_f:
-                  moves = game.action(4)
-              elif event.key == pygame.K_q:
-                  sys.exit(0)
-              # elif event.key == pygame.K_d:
-              #     game.unmove()
-      if len(moves) > 0 and DISPLAY_REAL_TIME:
-          if(len(moves) > 1):
-              boxes_moves.append(moves[1])
+    if game.is_completed():
+      break
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        sys.exit(0)
+      elif event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_UP:
+          moves = game.action(0)
+        elif event.key == pygame.K_DOWN:
+          moves = game.action(1)
+        elif event.key == pygame.K_LEFT:
+          moves = game.action(2)
+        elif event.key == pygame.K_RIGHT:
+          moves = game.action(3)
+        elif event.key == pygame.K_f:
+          moves = game.action(4)
+        elif event.key == pygame.K_q:
+          sys.exit(0)
+        # elif event.key == pygame.K_d:
+        #     game.unmove()
+    if len(moves) > 0 and DISPLAY_REAL_TIME:
+        if(len(moves) > 1):
+          boxes_moves.append(moves[1])
 
-          if(checkSameBox(boxes_moves)):
-              real_time_display.run(move_array)
-              real_time_display.run(moves)
-              move_array = []
-              boxes_moves =  []
-              moves = []
-              
-          for move in moves:
-              move_array.append(move)
+        if(checkSameBox(boxes_moves)):
+          real_time_display.run(move_array)
+          real_time_display.run(moves)
+          move_array = []
+          boxes_moves =  []
           moves = []
-          if(game.index == 0):
-              print(move_array)
-              real_time_display.run(move_array)
-              move_array = []
-              boxes_moves =  []
-              
-      if not DISPLAY_REAL_TIME:
-          print_game(game.matrix, screen)
+            
+        for move in moves:
+          move_array.append(move)
 
-      pygame.display.update()
+        moves = []
+        
+        if(game.index == 0):
+          print(move_array)
+          real_time_display.run(move_array)
+          move_array = []
+          boxes_moves =  []
+            
+    if not DISPLAY_REAL_TIME:
+      print_game(game.matrix, screen)
+
+    pygame.display.update()
 elif mode == "train": ########################### TRAIN ###########################
   import time
   import matplotlib.pyplot as plt
@@ -91,15 +93,15 @@ elif mode == "train": ########################### TRAIN ########################
   load = False
   load_model_name = "models/multipleMaps__1576623075.model"
 
-  MODEL_NAME = 'big_map_1_goal_1_robot'
+  MODEL_NAME = 'level10_changed_discount'
   MIN_REWARD = 0.01  # For model save
 
   # Environment settings
-  EPISODES = 2000
+  EPISODES = 8000
 
   # Exploration settings
   epsilon = 1  # not a constant, going to be decayed
-  EPSILON_DECAY = 0.998 #99975
+  EPSILON_DECAY = 0.9996 #99975
   MIN_EPSILON = 0.001
 
   #  Stats settings
@@ -206,12 +208,12 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
   from DeepRL import DQNAgent
   EPISODES = 10
 
-  load_model_name = "models/big_map_1_goal_1_robot__1578064903.model"
+  load_model_name = "models/level10_changed_discount__1578229746.model"
 
   agent = DQNAgent()
   agent.model = load_model(load_model_name)
 
-  game = Game('training_levels', 9)
+  game = Game('training_levels', 10)
   pygame.init()
   size = game.load_size()
   screen = pygame.display.set_mode(size)
@@ -223,7 +225,7 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
 
   for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
     # level = np.random.randint(1, 3)
-    level=9
+    level=10
     game = Game('training_levels', level)
 
     if DISPLAY_REAL_TIME:
@@ -325,3 +327,91 @@ elif mode == "new_training":
                     'models/{}__{}.model'.format(
                         MODEL_NAME, int(time.time())
                     ))
+elif mode == "q_learning":
+    from sokoban import Game, start_game, checkSameBox, print_game
+    from QLearning import qLearning, createEpsilonGreedyPolicy
+    import json
+    run_name = "test_dict"
+    level = 13
+    game = Game('training_levels', level)
+    Q = qLearning(game, 1000)
+    
+    # writing
+    np.save(run_name, np.array(dict(Q)))
+    print(len(Q))
+    policy = createEpsilonGreedyPolicy(Q, 0, Game.ACTION_SPACE_SIZE)
+    import pygame
+    from tqdm import tqdm
+
+   
+    from real_time_display import Basic_Map, Real_Time_Display
+    from utils import Move 
+
+    EPISODES = 10
+
+    # load_model_name = "models/big_map_1_goal_1_robot__1578064903.model"
+
+    game = Game('training_levels', level)
+    pygame.init()
+    size = game.load_size()
+    screen = pygame.display.set_mode(size)
+
+    moves = []
+
+    DISPLAY_REAL_TIME = True
+
+
+    for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
+        # level = np.random.randint(1, 3)
+        game = Game('training_levels', level)
+
+        if DISPLAY_REAL_TIME:
+            basic_map = Basic_Map(game.get_matrix())
+            real_time_display = Real_Time_Display(basic_map)
+            real_time_display.run(moves)
+        else:
+            size = game.load_size()
+            screen = pygame.display.set_mode(size)
+
+        move_array = []
+        boxes_moves = []
+        done = False
+
+        while not done:
+            print(Q[hash(game.get_state().data.tobytes())])
+            action = np.argmax(Q[hash(game.get_state().data.tobytes())])
+            moves = game.action(action)
+            if len(moves) > 0 and DISPLAY_REAL_TIME:
+                if(len(moves) > 1):
+                    boxes_moves.append(moves[1])
+
+                if(checkSameBox(boxes_moves)):
+                    real_time_display.run(move_array)
+                    real_time_display.run(moves)
+                    move_array = []
+                    boxes_moves =  []
+                    moves = []
+                
+                for move in moves:
+                    move_array.append(move)
+                moves = []
+                if(game.index == 0):
+                    print(move_array)
+                    real_time_display.run(move_array)
+                    move_array = []
+                    boxes_moves =  []
+                
+            if not DISPLAY_REAL_TIME:
+                print_game(game.matrix, screen)
+
+            pygame.display.update()
+            if game.is_completed():
+                print("done true")
+                done=True
+
+            for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        done=True
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_q:
+                            done=True
