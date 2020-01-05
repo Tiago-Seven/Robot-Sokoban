@@ -26,7 +26,7 @@ def createEpsilonGreedyPolicy(Q, epsilon, num_actions):
    
     return policyFunction 
 
-def qLearning(env, num_episodes, discount_factor = 0.5, 
+def qLearning(env, num_episodes, discount_factor = 0.8, 
                             alpha = 0.8):
 
     epsilon = 0.2 
@@ -71,8 +71,8 @@ def qLearning(env, num_episodes, discount_factor = 0.5,
    
             # take action and get reward, transit to next state 
             next_state, reward, done = env.step(action) 
-            if reward == 10:
-                print("Acabou!")
+            # if reward == 15:
+                # print("Acabou!")
             # elif reward > 1:
             #     print("box moved")
                 
