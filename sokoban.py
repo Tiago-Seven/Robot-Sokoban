@@ -86,6 +86,9 @@ class Game:
         # print("reward: {}".format(self.reward()))
         # exit()
 
+        # print("state: {}".format(self.get_state()))
+        # exit()
+
     def reset(self):
         self.matrix = []
         self.robots = []
@@ -329,7 +332,7 @@ class Game:
     def step(self, action):
         self.action(action)
         self.episode_step += 1
-        if self.episode_step > 50:
+        if self.episode_step > 100:
             return self.get_state(), self.reward(), True
         else:
             return self.get_state(), self.reward(), self.is_completed()
@@ -353,12 +356,15 @@ class Game:
         goals= []
         boxes = []
         available_boxes = []
+        available_goals = []
         x = 0
         y = 0
         for row in self.matrix:
             for char in row:
                 if char == "." or char == "*" or char =="+":
                     goals.append((x,y))
+                if char == "." or char =="+":
+                    available_goals.append((x,y))
                 if char == '$' or char == "*":
                     boxes.append((x,y))
                 if char == '$':
@@ -367,18 +373,29 @@ class Game:
             x = 0
             y = y + 1
         if(self.is_completed()):
-            return 10
+            return 15
         else:
             total = 0
             bonus = 0
-            for box in boxes:
-                closest_dist = closest_distance(box,goals)
+            for box in available_boxes:
+                # print(len(boxes))
+                # print(len(available_boxes))
+                # if len(available_boxes) == 3:
+                #     print("available")
+                #     print(len(available_boxes))
+                #     print(len(boxes))
+
+                closest_dist = closest_distance(box,available_goals)
+                total += closest_dist
                 
-                if closest_dist != 0:
-                    total += closest_dist
-                else:
-                    bonus += 1
-            total += closest_distance(self.robots[self.index],available_boxes)
+                # if closest_dist != 0:
+                #     total += closest_dist
+                # else:
+                #     bonus += 1
+
+            for robot in self.robots:
+                total += closest_distance(robot,available_boxes)
+            bonus = len(boxes) - len(available_boxes)
             return 4/total + bonus
         
 
