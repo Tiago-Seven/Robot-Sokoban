@@ -122,6 +122,7 @@ elif mode == "train": ########################### TRAIN ########################
   if (load):
     from keras.models import load_model
     agent.model = load_model(load_model_name)
+    agent.target_model.set_weights(agent.model.get_weights())
 
   # Iterate over episodes
   for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
@@ -332,9 +333,9 @@ elif mode == "q_learning":
     from QLearning import qLearning, createEpsilonGreedyPolicy
     import json
     run_name = "test_dict"
-    level = 13
+    level = 10
     game = Game('training_levels', level)
-    Q = qLearning(game, 1000)
+    Q = qLearning(game, 30000)
     
     # writing
     np.save(run_name, np.array(dict(Q)))

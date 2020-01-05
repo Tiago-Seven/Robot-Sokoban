@@ -28,8 +28,8 @@ def createEpsilonGreedyPolicy(Q, epsilon, num_actions):
 def qLearning(env, num_episodes, discount_factor = 0.5, 
                             alpha = 0.8):
 
-    epsilon = 1 #starting(will be decayed)
-    epsilon_decay = 0.9996
+    epsilon = 0.2 #starting(will be decayed)
+    epsilon_decay = 0.99965
     """ 
     Q-Learning algorithm: Off-policy TD control. 
     Finds the optimal greedy policy while improving 
@@ -51,7 +51,7 @@ def qLearning(env, num_episodes, discount_factor = 0.5,
        
     # For every episode 
     for i in range(num_episodes):
-        epsilon = (-(1/num_episodes)*i)+1
+        # epsilon = (-(1/num_episodes)*i)+1
         if i % 100 == 0:
             print(i)
 
