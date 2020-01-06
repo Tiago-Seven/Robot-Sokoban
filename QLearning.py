@@ -49,13 +49,14 @@ def qLearning(env, num_episodes, discount_factor = 0.5,
     # Create an epsilon greedy policy function 
     # appropriately for environment action space 
     policy = createEpsilonGreedyPolicy(Q, epsilon, Game.ACTION_SPACE_SIZE) 
-       
+
+    rewards = []
     # For every episode 
     for i in range(num_episodes):
         # epsilon = (-(1/num_episodes)*i)+1
         if i % 100 == 0:
             print(i)
-
+        episode_reward = 0.0
         # Reset the environment and pick the first action 
         state = env.reset() 
         first = True
@@ -71,6 +72,7 @@ def qLearning(env, num_episodes, discount_factor = 0.5,
    
             # take action and get reward, transit to next state 
             next_state, reward, done = env.step(action) 
+            episode_reward += reward
             # if reward == 15:
                 # print("Acabou!")
             # elif reward > 1:
@@ -102,7 +104,9 @@ def qLearning(env, num_episodes, discount_factor = 0.5,
 
             # done is True if episode terminated    
             if done: 
+                rewards.append(episode_reward/e)
                 break
-            state = next_state 
+            state = next_state
+        
        
-    return Q
+    return Q, rewards

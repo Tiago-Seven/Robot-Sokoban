@@ -333,12 +333,14 @@ elif mode == "new_training":
 elif mode == "q_learning":
     from sokoban import Game, start_game, checkSameBox, print_game
     from QLearning import qLearning, createEpsilonGreedyPolicy
+    import matplotlib.pyplot as plt
     import json
     run_name = "test_dict"
     level = 10
     game = Game('training_levels', level)
-    Q = qLearning(game, 30000)
-    
+    Q, stats = qLearning(game, 30000)
+    plt.plot(stats)
+    plt.show()
     # writing
     np.save(run_name, np.array(dict(Q)))
     print(len(Q))
