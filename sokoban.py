@@ -373,7 +373,7 @@ class Game:
             x = 0
             y = y + 1
         if(self.is_completed()):
-            return 15
+            return 50
         else:
             total = 0
             bonus = 0

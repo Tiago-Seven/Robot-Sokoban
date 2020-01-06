@@ -26,7 +26,7 @@ def createEpsilonGreedyPolicy(Q, epsilon, num_actions):
    
     return policyFunction 
 
-def qLearning(env, num_episodes, discount_factor = 0.8, 
+def qLearning(env, num_episodes, discount_factor = 0.5, 
                             alpha = 0.8):
 
     epsilon = 0.2 
