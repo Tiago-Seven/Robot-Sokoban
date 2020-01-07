@@ -6,7 +6,7 @@ import numpy as np
 import os
 
 os.environ["PYTHONHASHSEED"] = "0"
-mode = "q_autonomous"
+mode = "q_learning"
 
 if mode == "play": ########################### PLAY ###########################
   import pygame
@@ -335,10 +335,11 @@ elif mode == "q_learning":
     from QLearning import qLearning, createEpsilonGreedyPolicy
     import matplotlib.pyplot as plt
     import json
-    run_name = "test_dict"
-    level = 10
+
+    run_name = "level20_reward50_dis08_200000_ep04"
+    level = 20
     game = Game('training_levels', level)
-    Q, stats = qLearning(game, 30000)
+    Q, stats = qLearning(game, 200000)
     plt.plot(stats)
     plt.show()
     # writing
@@ -431,8 +432,8 @@ elif mode == "q_autonomous":
     import hashlib
     const_hash = hashlib.sha256()
 
-    model_name = "opposite_corners.npy"
-    level = 14
+    model_name = "level16_reward50_dis08_150000_ep04.npy"
+    level = 16
     Q = np.load(model_name)
     Q = Q.item()
     # print(type(Q))
@@ -517,8 +518,11 @@ elif mode == "q_autonomous":
 
             pygame.display.update()
             if game.is_completed():
+                if len(move_array) > 0:
+                  real_time_display.run(move_array)
                 print("done true")
                 done=True
+
 
             for event in pygame.event.get():
                     if event.type == pygame.QUIT:
