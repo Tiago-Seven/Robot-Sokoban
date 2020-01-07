@@ -14,6 +14,8 @@ if mode == "play": ########################### PLAY ###########################
   from real_time_display import Basic_Map, Real_Time_Display
   from utils import Move 
   
+  collisions = True
+
   pygame.init()
   level = start_game()
   game = Game('training_levels', level)
@@ -27,7 +29,7 @@ if mode == "play": ########################### PLAY ###########################
   if DISPLAY_REAL_TIME:
     basic_map = Basic_Map(game.get_matrix())
     real_time_display = Real_Time_Display(basic_map)
-    real_time_display.run(moves)
+    real_time_display.run(moves, collisions)
   else:
     size = game.load_size()
     screen = pygame.display.set_mode(size)
@@ -61,8 +63,8 @@ if mode == "play": ########################### PLAY ###########################
           boxes_moves.append(moves[1])
 
         if(checkSameBox(boxes_moves)):
-          real_time_display.run(move_array)
-          real_time_display.run(moves)
+          real_time_display.run(move_array, collisions)
+          real_time_display.run(moves, collisions)
           move_array = []
           boxes_moves =  []
           moves = []
@@ -73,7 +75,7 @@ if mode == "play": ########################### PLAY ###########################
         moves = []
         
         if(game.index == 0):
-          real_time_display.run(move_array)
+          real_time_display.run(move_array, collisions)
           move_array = []
           boxes_moves =  []
             
@@ -210,7 +212,7 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
   EPISODES = 10
 
   load_model_name = "models/level10_changed_discount__1578229746.model"
-
+  collisions = True
   agent = DQNAgent()
   agent.model = load_model(load_model_name)
 
@@ -232,7 +234,7 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
     if DISPLAY_REAL_TIME:
       basic_map = Basic_Map(game.get_matrix())
       real_time_display = Real_Time_Display(basic_map)
-      real_time_display.run(moves)
+      real_time_display.run(moves, collisions)
     else:
       size = game.load_size()
       screen = pygame.display.set_mode(size)
@@ -249,8 +251,8 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
                 boxes_moves.append(moves[1])
 
             if(checkSameBox(boxes_moves)):
-                real_time_display.run(move_array)
-                real_time_display.run(moves)
+                real_time_display.run(move_array, collisions)
+                real_time_display.run(moves, collisions)
                 move_array = []
                 boxes_moves =  []
                 moves = []
@@ -260,7 +262,7 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
             moves = []
             if(game.index == 0):
                 print(move_array)
-                real_time_display.run(move_array)
+                real_time_display.run(move_array, collisions)
                 move_array = []
                 boxes_moves =  []
               
@@ -373,7 +375,7 @@ elif mode == "q_learning":
         if DISPLAY_REAL_TIME:
             basic_map = Basic_Map(game.get_matrix())
             real_time_display = Real_Time_Display(basic_map)
-            real_time_display.run(moves)
+            real_time_display.run(moves, collisions)
         else:
             size = game.load_size()
             screen = pygame.display.set_mode(size)
@@ -391,8 +393,8 @@ elif mode == "q_learning":
                     boxes_moves.append(moves[1])
 
                 if(checkSameBox(boxes_moves)):
-                    real_time_display.run(move_array)
-                    real_time_display.run(moves)
+                    real_time_display.run(move_array, collisions)
+                    real_time_display.run(moves, collisions)
                     move_array = []
                     boxes_moves =  []
                     moves = []
@@ -402,7 +404,7 @@ elif mode == "q_learning":
                 moves = []
                 if(game.index == 0):
                     print(move_array)
-                    real_time_display.run(move_array)
+                    real_time_display.run(move_array, collisions)
                     move_array = []
                     boxes_moves =  []
                 
@@ -525,6 +527,7 @@ elif mode == "q_autonomous":
                   real_time_display.run(move_array, collisions)
                 print("done true")
                 done=True
+
 
             for event in pygame.event.get():
                     if event.type == pygame.QUIT:
