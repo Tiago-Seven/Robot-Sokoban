@@ -3,3 +3,5 @@
 models
 logs
 gym-sokoban
+q_tables
+*.npy
