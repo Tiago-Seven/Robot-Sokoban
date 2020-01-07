@@ -20,10 +20,9 @@ if mode == "play": ########################### PLAY ###########################
   size = game.load_size()
   screen = pygame.display.set_mode(size)
   
+  moves = [Move((0,0),(0,0),"")]
 
-  moves = []
-
-  DISPLAY_REAL_TIME = False
+  DISPLAY_REAL_TIME = True
 
   if DISPLAY_REAL_TIME:
     basic_map = Basic_Map(game.get_matrix())
@@ -74,7 +73,6 @@ if mode == "play": ########################### PLAY ###########################
         moves = []
         
         if(game.index == 0):
-          print(move_array)
           real_time_display.run(move_array)
           move_array = []
           boxes_moves =  []
@@ -335,14 +333,15 @@ elif mode == "q_learning":
     from QLearning import qLearning, createEpsilonGreedyPolicy
     import matplotlib.pyplot as plt
     import json
-    run_name = "test_dict"
-    level = 10
+    run_name = "level15"
+    level = 15
     game = Game('training_levels', level)
     Q, stats = qLearning(game, 30000)
-    plt.plot(stats)
-    plt.show()
     # writing
     np.save(run_name, np.array(dict(Q)))
+    plt.plot(stats)
+    plt.show()
+
     print(len(Q))
     policy = createEpsilonGreedyPolicy(Q, 0, Game.ACTION_SPACE_SIZE)
     import pygame
@@ -429,13 +428,17 @@ elif mode == "q_autonomous":
     from real_time_display import Basic_Map, Real_Time_Display
     from utils import Move
     import hashlib
+    import time
     const_hash = hashlib.sha256()
 
-    model_name = "opposite_corners.npy"
-    level = 14
+    model_name = "q_tables/level20_reward50_dis08_200000_ep04.npy"
+    level = 20
+
+    collisions = False
+
     Q = np.load(model_name)
     Q = Q.item()
-    # print(type(Q))
+    print(len(Q))
     # exit()
     import pygame
     from tqdm import tqdm
@@ -444,7 +447,7 @@ elif mode == "q_autonomous":
     from real_time_display import Basic_Map, Real_Time_Display
     from utils import Move 
 
-    EPISODES = 10
+    EPISODES = 1
 
     # load_model_name = "models/big_map_1_goal_1_robot__1578064903.model"
 
@@ -465,7 +468,7 @@ elif mode == "q_autonomous":
         if DISPLAY_REAL_TIME:
             basic_map = Basic_Map(game.get_matrix())
             real_time_display = Real_Time_Display(basic_map)
-            real_time_display.run(moves)
+            real_time_display.run(moves, collisions)
         else:
             size = game.load_size()
             screen = pygame.display.set_mode(size)
@@ -474,10 +477,11 @@ elif mode == "q_autonomous":
         boxes_moves = []
         done = False
         steps = 0
+        start_time = time.time()
         while not done:
             print(Q[hashlib.sha224(game.get_state().data.tobytes()).hexdigest()])
             action = np.argmax(Q[hashlib.sha224(game.get_state().data.tobytes()).hexdigest()])
-
+            
             if action == 0:
                 print("up")
             elif action == 1:
@@ -489,16 +493,16 @@ elif mode == "q_autonomous":
             elif action == 4:
                 print("stop")
 
+            steps += 1
             moves = game.action(action)
             if len(moves) > 0 and DISPLAY_REAL_TIME:
-                steps += 1
-                print("step: {}".format(steps))
+                
                 if(len(moves) > 1):
                     boxes_moves.append(moves[1])
 
                 if(checkSameBox(boxes_moves)):
-                    real_time_display.run(move_array)
-                    real_time_display.run(moves)
+                    real_time_display.run(move_array, collisions)
+                    real_time_display.run(moves, collisions)
                     move_array = []
                     boxes_moves =  []
                     moves = []
@@ -508,7 +512,7 @@ elif mode == "q_autonomous":
                 moves = []
                 if(game.index == 0):
                     print(move_array)
-                    real_time_display.run(move_array)
+                    real_time_display.run(move_array, collisions)
                     move_array = []
                     boxes_moves =  []
                 
@@ -517,6 +521,8 @@ elif mode == "q_autonomous":
 
             pygame.display.update()
             if game.is_completed():
+                if len(move_array) > 0:
+                  real_time_display.run(move_array, collisions)
                 print("done true")
                 done=True
 
@@ -526,3 +532,7 @@ elif mode == "q_autonomous":
                     elif event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_q:
                             done=True
+         # your code
+        elapsed_time = time.time() - start_time
+        print("time: {}".format(elapsed_time))
+        print("steps: {}".format(steps))

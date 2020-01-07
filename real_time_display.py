@@ -66,67 +66,101 @@ class Real_Time_Display:
                 x = x + 32
             x = 0
             y = y + 32
+    def is_move_free(self, move, moves):
+        moves = [m for m in moves if move.end != m.end or move.start != m.start]
+        print("len moves after removed same {}".format(len(moves)))
+        if move.object == "box":
+            for other_move in moves:
+                if move.end == other_move.start: #if its a box and there is something in front
+                    return False
+            return True
+        elif move.object == "robot":
+            for other_move in moves:
+                if move.end == other_move.start and other_move.object == "robot": #if its a robot and there is other robot in front
+                    return False
+                elif move.end == other_move.start: #box in front
+                    return self.is_move_free(other_move,moves) #if box is free the robot is also free    
+        return True
 
+    def split_moves(self, moves):
+        frees = []
+        while len(moves) > 0:
+            current_frees = []
+            current_frees_indexes = []
+            for i, move in enumerate(moves):
+                if self.is_move_free(move, moves):
+                    current_frees_indexes.append(i)
+                    current_frees.append(move)
+
+            for i in sorted(current_frees_indexes, reverse=True):
+                del moves[i]
+            frees.append(current_frees)
+        return frees
   
-    def run(self,moves):
-        size = self.basic_map.load_size()
-        # pygame.init()
-        screen = pygame.display.set_mode(size)
-        clock = pygame.time.Clock()
-        pygame.display.set_caption("First Class!")
+    def run(self,initial_moves,collisions):
+        if collisions:
+            split_moves = self.split_moves(initial_moves)
+        else:
+            split_moves = [initial_moves]
+        for moves in split_moves:
+            size = self.basic_map.load_size()
+            # pygame.init()
+            screen = pygame.display.set_mode(size)
+            clock = pygame.time.Clock()
+            pygame.display.set_caption("Sokoban")
 
-        fps_limit = 60
-        run_me = True
-        n = 0
-
-        for object in self.robots + self.boxes:
-            for move in moves:
-                if object.x == move.start[0] * 32 and object.y == move.start[1] * 32:
-                    object.move = (move.end[0] - move.start[0],
-                                   move.end[1] - move.start[1])
-                    object.dest = (move.end[0]*32, move.end[1]*32)
-                    if isinstance(object,Box):
-                        object.is_in_goal = self.basic_map.matrix[move.end[1]][move.end[0]] == '*'
+            fps_limit = 60
+            run_me = True
+            n = 0
         
-        while n < 60 and run_me:
-            n += 1
-            clock.tick(fps_limit)
-            self.basic_map.print_game(screen)
-
-            all_rotated = True
-            for robot in self.robots:
-                if not robot.is_rotated():
-                    all_rotated = False
-                    break
+            for object in self.robots + self.boxes:
+                for move in moves:
+                    if object.x == move.start[0] * 32 and object.y == move.start[1] * 32:
+                        object.move = (move.end[0] - move.start[0],
+                                    move.end[1] - move.start[1])
+                        object.dest = (move.end[0]*32, move.end[1]*32)
+                        if isinstance(object,Box):
+                            object.is_in_goal = self.basic_map.matrix[move.end[1]][move.end[0]] == '*'
             
-            if not all_rotated:
+            while n < 60 and run_me:
+                n += 1
+                clock.tick(fps_limit)
+                self.basic_map.print_game(screen)
+
+                all_rotated = True
                 for robot in self.robots:
-                    robot.update_rotate()
-                    robot.display(screen)
-                for box in self.boxes:
-                    box.display(screen)
-            else:
-                for object in self.boxes + self.robots:
-                    object.update_move()
-                    object.display(screen)
-                
-                all_placed = True
-                for object in self.robots + self.boxes:
-                    if not object.is_in_place():
-                        all_placed = False
+                    if not robot.is_rotated():
+                        all_rotated = False
                         break
+                
+                if not all_rotated:
+                    for robot in self.robots:
+                        robot.update_rotate()
+                        robot.display(screen)
+                    for box in self.boxes:
+                        box.display(screen)
+                else:
+                    for object in self.boxes + self.robots:
+                        object.update_move()
+                        object.display(screen)
+                    
+                    all_placed = True
+                    for object in self.robots + self.boxes:
+                        if not object.is_in_place():
+                            all_placed = False
+                            break
 
-                run_me = not all_placed
+                    run_me = not all_placed
 
-            pygame.display.flip()
+                pygame.display.flip()
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    sys.exit(0)
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_q:
-                        pygame.quit()
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
                         sys.exit(0)
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_q:
+                            pygame.quit()
+                            sys.exit(0)
             
 
 

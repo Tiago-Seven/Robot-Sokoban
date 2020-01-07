@@ -18,7 +18,7 @@ import os
 from sokoban import Game
 
 
-DISCOUNT = 0.99
+DISCOUNT = 0.6
 REPLAY_MEMORY_SIZE = 50000  # How many last steps to keep for model training
 # Minimum number of steps in a memory to start training
 MIN_REPLAY_MEMORY_SIZE = 1000

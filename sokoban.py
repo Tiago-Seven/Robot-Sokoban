@@ -189,7 +189,7 @@ class Game:
             print("ERROR: Value '"+content+"' to be added is not valid")
 
     def can_move(self, x, y):
-        return self.get_content(self.robots[self.index][0]+x, self.robots[self.index][1]+y) not in ['#', '*', '$', '@']
+        return self.get_content(self.robots[self.index][0]+x, self.robots[self.index][1]+y) not in ['#', '*', '$', '@','+']
 
     def next(self, x, y):
         return self.get_content(self.robots[self.index][0]+x, self.robots[self.index][1]+y)
@@ -232,7 +232,7 @@ class Game:
         elif choice == 3:
             moves = self.move(1, 0, True)
         elif choice == 4:
-            moves = [Move((0,0),(0,0))]
+            moves = [Move((0,0),(0,0),"")]
         else:
             print("choice not supported")
             print(choice)
@@ -249,7 +249,8 @@ class Game:
             future = self.next(x, y)
             moves.append(Move(
                 (current[0], current[1]),
-                (current[0]+x, current[1]+y)
+                (current[0]+x, current[1]+y),
+                "robot"
             ))
             if char == '@' and future == ' ':
                 # worker to floor
@@ -275,11 +276,13 @@ class Game:
             future_box = self.next(x+x, y+y)
             moves.append(Move(
                 (current[0], current[1]),
-                (current[0]+x, current[1]+y)
+                (current[0]+x, current[1]+y),
+                "robot"
             ))
             moves.append(Move(
                 (current[0]+x, current[1]+y),
-                (current[0]+2*x, current[1]+2*y)
+                (current[0]+2*x, current[1]+2*y),
+                "box"
             ))
             if char == '@' and future == '$' and future_box == ' ':
                 # worker push box to floor
@@ -325,7 +328,8 @@ class Game:
         else:
             moves.append(Move(
                 (0, 0),
-                (0, 0)
+                (0, 0),
+                ""
             ))
         return moves
 
