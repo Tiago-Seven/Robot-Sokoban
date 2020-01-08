@@ -68,7 +68,6 @@ class Real_Time_Display:
             y = y + 32
     def is_move_free(self, move, moves):
         moves = [m for m in moves if move.end != m.end or move.start != m.start]
-        print("len moves after removed same {}".format(len(moves)))
         if move.object == "box":
             for other_move in moves:
                 if move.end == other_move.start: #if its a box and there is something in front

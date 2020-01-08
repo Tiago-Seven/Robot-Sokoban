@@ -44,7 +44,6 @@ class Game:
             return False
 
     def __init__(self, filename, level, n_robots = 1):
-        #if level < 1 or level > 50:
         level = int(level)
         self.filename = filename
         self.matrix = []
@@ -82,12 +81,6 @@ class Game:
         self.robots = self.get_robots()
         if len(self.robots) == 0:
             self.robots = self.set_robots()
-        
-        # print("reward: {}".format(self.reward()))
-        # exit()
-
-        # print("state: {}".format(self.get_state()))
-        # exit()
 
     def reset(self):
         self.matrix = []
@@ -356,7 +349,6 @@ class Game:
         return state
 
     def reward(self):
-        # return self.robots[self.index][1]
         goals= []
         boxes = []
         available_boxes = []
@@ -382,28 +374,14 @@ class Game:
             total = 0
             bonus = 0
             for box in available_boxes:
-                # print(len(boxes))
-                # print(len(available_boxes))
-                # if len(available_boxes) == 3:
-                #     print("available")
-                #     print(len(available_boxes))
-                #     print(len(boxes))
-
                 closest_dist = closest_distance(box,available_goals)
                 total += closest_dist
-                
-                # if closest_dist != 0:
-                #     total += closest_dist
-                # else:
-                #     bonus += 1
-
             for robot in self.robots:
                 total += closest_distance(robot,available_boxes)
+
             bonus = len(boxes) - len(available_boxes)
             return 4/total + bonus
         
-
-
 def print_game(matrix, screen):
     screen.fill(background)
     x = 0

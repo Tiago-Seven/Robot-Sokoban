@@ -39,6 +39,8 @@ if mode == "play": ########################### PLAY ###########################
     
   while 1:
     if game.is_completed():
+      if len(move_array) > 0:
+        real_time_display.run(move_array, collisions)
       break
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
@@ -56,8 +58,6 @@ if mode == "play": ########################### PLAY ###########################
           moves = game.action(4)
         elif event.key == pygame.K_q:
           sys.exit(0)
-        # elif event.key == pygame.K_d:
-        #     game.unmove()
     if len(moves) > 0 and DISPLAY_REAL_TIME:
         if(len(moves) > 1):
           boxes_moves.append(moves[1])
@@ -83,7 +83,8 @@ if mode == "play": ########################### PLAY ###########################
       print_game(game.matrix, screen)
 
     pygame.display.update()
-elif mode == "train": ########################### TRAIN ###########################
+elif mode == "train": ########################### TRAIN DEEP ###########################
+  #Adapted from https://pythonprogramming.net/training-deep-q-learning-dqn-reinforcement-learning-python-tutorial/  
   import time
   import matplotlib.pyplot as plt
   from tqdm import tqdm
@@ -93,9 +94,9 @@ elif mode == "train": ########################### TRAIN ########################
 
   ## INPUT
   load = False
-  load_model_name = "models/multipleMaps__1576623075.model"
+  load_model_name = "models/lvl9_new_deep_learning_1000__1578158969.model"
 
-  MODEL_NAME = 'level10_changed_discount'
+  MODEL_NAME = 'level9'
   MIN_REWARD = 0.01  # For model save
 
   # Environment settings
@@ -116,11 +117,6 @@ elif mode == "train": ########################### TRAIN ########################
   np.random.seed(2)
 
   agent = DQNAgent()
-    #   from keras.utils import plot_model
-    #   import os
-    #   os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin/'
-    #   plot_model(agent.model, to_file='NN_model.png', show_shapes=True,)
-    #   exit()
   if (load):
     from keras.models import load_model
     agent.model = load_model(load_model_name)
@@ -128,15 +124,11 @@ elif mode == "train": ########################### TRAIN ########################
 
   # Iterate over episodes
   for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
-    # Update tensorboard step every episode
-    # agent.tensorboard.step = episode
-
     # Restarting episode - reset episode reward and step number
     episode_reward = 0.0
     step = 1
 
     # Reset environment and get initial state
-    # level = np.random.randint(1, 3)
     level=9
     game = Game('training_levels', level)
     current_state = game.get_state()
@@ -148,10 +140,6 @@ elif mode == "train": ########################### TRAIN ########################
       if np.random.random() > epsilon:
           # Get action from Q table
           action = np.argmax(agent.get_qs(current_state))
-          # chosen_moves.append(action)
-          # print("above action")
-          # print(action)
-          # print("below action")
       else:
           # Get random action
           action = np.random.randint(0, game.ACTION_SPACE_SIZE)
@@ -160,16 +148,9 @@ elif mode == "train": ########################### TRAIN ########################
       # Transform new continous state to new discrete state and count reward
       episode_reward += reward
 
-      # if SHOW_PREVIEW and episode > 4990:
-      #     print_game(game.matrix,screen)
-      #     pygame.display.update()
-          # print(game.matrix)
-
       # Every step we update replay memory and train main network
       agent.update_replay_memory(
           (current_state, action, reward, new_state, done))
-      # print(current_state)
-      # print(new_state)
       agent.train(done, step)
 
       current_state = new_state
@@ -182,8 +163,6 @@ elif mode == "train": ########################### TRAIN ########################
             ep_rewards[-AGGREGATE_STATS_EVERY:])/len(ep_rewards[-AGGREGATE_STATS_EVERY:])
         min_reward = min(ep_rewards[-AGGREGATE_STATS_EVERY:])
         max_reward = max(ep_rewards[-AGGREGATE_STATS_EVERY:])
-        # agent.tensorboard.update_stats(
-        #     reward_avg=average_reward, reward_min=min_reward, reward_max=max_reward, epsilon=epsilon)
 
         # Save model, but only when min reward is greater or equal a set value
         if min_reward >= MIN_REWARD:
@@ -199,7 +178,7 @@ elif mode == "train": ########################### TRAIN ########################
 
   plt.plot(ep_rewards)
   plt.show()
-elif mode == "autonomous": ########################### AUTONOMOUS ###########################
+elif mode == "autonomous": ########################### AUTONOMOUS DEEP ###########################
   from keras.models import load_model
   import pygame
   from tqdm import tqdm
@@ -211,12 +190,12 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
   from DeepRL import DQNAgent
   EPISODES = 10
 
-  load_model_name = "models/level10_changed_discount__1578229746.model"
+  load_model_name = "models/lvl9_new_deep_learning_1000__1578158969.model"
   collisions = True
   agent = DQNAgent()
   agent.model = load_model(load_model_name)
 
-  game = Game('training_levels', 10)
+  game = Game('training_levels', 9)
   pygame.init()
   size = game.load_size()
   screen = pygame.display.set_mode(size)
@@ -227,8 +206,7 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
 
 
   for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
-    # level = np.random.randint(1, 3)
-    level=10
+    level=9
     game = Game('training_levels', level)
 
     if DISPLAY_REAL_TIME:
@@ -271,7 +249,7 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
 
         pygame.display.update()
         if game.is_completed():
-            print("done true")
+            print("done!")
             done=True
 
         for event in pygame.event.get():
@@ -280,83 +258,30 @@ elif mode == "autonomous": ########################### AUTONOMOUS ##############
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:
                         done=True
-elif mode == "new_training":
-    from tqdm import tqdm
-    from keras.optimizers import Adam
-    from NewDeepRl import Agent
-    from sokoban import Game
-
-    optimizer = Adam(lr=0.01)
-    level=9
-    environment = Game('training_levels', level)
-    agent = Agent(environment, optimizer)
-
-    MIN_REWARD = 0
-
-    batch_size = 32
-    num_of_episodes = 100
-    timesteps_per_episode = 1000
-    agent.q_network.summary()
-    
-    for e in tqdm(range(0, num_of_episodes), ascii=True, unit='episodes'):
-        # Reset the environment
-        environment = Game('training_levels', level)
-        state = environment.get_state()
-        
-        # Initialize variables
-        reward = 0
-        terminated = False
-
-        
-        for timestep in range(timesteps_per_episode):
-            # Run Action
-            action = agent.act(state)
-            
-            # Take action    
-            next_state, reward, terminated = environment.step(action) 
-            agent.store(state, action, reward, next_state, terminated)
-            
-            state = next_state
-            
-            if terminated:
-                agent.align_target_model()
-                break
-                
-            if len(agent.experience_replay) > batch_size:
-                agent.retrain(batch_size)
-            
-            if min_reward >= MIN_REWARD:
-                agent.target_network.save(
-                    'models/{}__{}.model'.format(
-                        MODEL_NAME, int(time.time())
-                    ))
-elif mode == "q_learning":
+elif mode == "q_learning": ########################### TRAIN Q-LEARNING ###########################
     from sokoban import Game, start_game, checkSameBox, print_game
     from QLearning import qLearning, createEpsilonGreedyPolicy
     import matplotlib.pyplot as plt
     import json
-    run_name = "level15"
-    level = 15
+    import pygame
+    from tqdm import tqdm 
+    from real_time_display import Basic_Map, Real_Time_Display
+    from utils import Move 
+    import hashlib
+
+    run_name = "level6"
+    level = 6
     game = Game('training_levels', level)
     Q, stats = qLearning(game, 30000)
+
     # writing
     np.save(run_name, np.array(dict(Q)))
     plt.plot(stats)
     plt.show()
 
-    print(len(Q))
     policy = createEpsilonGreedyPolicy(Q, 0, Game.ACTION_SPACE_SIZE)
-    import pygame
-    from tqdm import tqdm
-
-   
-    from real_time_display import Basic_Map, Real_Time_Display
-    from utils import Move 
-    import hashlib
 
     EPISODES = 10
-
-    # load_model_name = "models/big_map_1_goal_1_robot__1578064903.model"
 
     game = Game('training_levels', level)
     pygame.init()
@@ -369,7 +294,6 @@ elif mode == "q_learning":
 
 
     for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
-        # level = np.random.randint(1, 3)
         game = Game('training_levels', level)
 
         if DISPLAY_REAL_TIME:
@@ -413,7 +337,7 @@ elif mode == "q_learning":
 
             pygame.display.update()
             if game.is_completed():
-                print("done true")
+                print("done!")
                 done=True
 
             for event in pygame.event.get():
@@ -422,36 +346,27 @@ elif mode == "q_learning":
                     elif event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_q:
                             done=True
-elif mode == "q_autonomous":
+elif mode == "q_autonomous": ########################### AUTONOMOUS Q-LEARNING ###########################
     import pygame
     from tqdm import tqdm
-
     from sokoban import Game, start_game, checkSameBox, print_game
     from real_time_display import Basic_Map, Real_Time_Display
     from utils import Move
     import hashlib
-    import time
+    import time   
+
     const_hash = hashlib.sha256()
 
-    model_name = "q_tables/level20_reward50_dis08_200000_ep04.npy"
-    level = 20
+    model_name = "q_tables/level19.npy"
+    level = 19
 
-    collisions = False
+    collisions = True
 
     Q = np.load(model_name)
     Q = Q.item()
-    print(len(Q))
-    # exit()
-    import pygame
-    from tqdm import tqdm
-
-   
-    from real_time_display import Basic_Map, Real_Time_Display
-    from utils import Move 
+  
 
     EPISODES = 1
-
-    # load_model_name = "models/big_map_1_goal_1_robot__1578064903.model"
 
     game = Game('training_levels', level)
     pygame.init()
@@ -464,7 +379,6 @@ elif mode == "q_autonomous":
 
 
     for episode in tqdm(range(1, EPISODES + 1), ascii=True, unit='episodes'):
-        # level = np.random.randint(1, 3)
         game = Game('training_levels', level)
 
         if DISPLAY_REAL_TIME:
@@ -535,7 +449,7 @@ elif mode == "q_autonomous":
                     elif event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_q:
                             done=True
-         # your code
+        #Elapsed Time and Steps
         elapsed_time = time.time() - start_time
         print("time: {}".format(elapsed_time))
         print("steps: {}".format(steps))
